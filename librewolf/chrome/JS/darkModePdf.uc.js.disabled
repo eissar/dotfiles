@@ -1,0 +1,10 @@
+// ==UserScript==
+// @name            make file: .pdf dark mode
+// @author          eissar
+// @include           file:///*/*
+// ==/UserScript==
+    console.log("AAHHH")
+// (function() {
+    //document.body.style.filter = 'invert(0.95)';
+    //document.body.style.setProperty('--body-bg-color', 'black');
+// })();
