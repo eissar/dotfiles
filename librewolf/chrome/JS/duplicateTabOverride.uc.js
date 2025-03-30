@@ -1,9 +1,7 @@
 // ==UserScript==
 // @name            Duplicate Tab Shortcut Override
 // @author          eissar
-// @onlyonce
 // ==/UserScript==
-
 UC_API.Hotkeys.define({
     // one or more of: alt, shift, ctrl, meta, accel. separated by space, enclosed by quotes.
     // ctrl + shift
@@ -19,4 +17,3 @@ UC_API.Hotkeys.define({
         }
     },
 }).attachToWindow(window, { suppressOriginal: true });
-
