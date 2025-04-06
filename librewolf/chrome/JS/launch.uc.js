@@ -1,7 +1,6 @@
 // ==UserScript==
 // @name            fx-launch-menu
 // @author          eissar
-// @onlyonce
 // ==/UserScript==
 (function () {
     function find_and_activate(target_host) {
@@ -82,5 +81,6 @@ UC_API.Hotkeys.define({
     modifiers: 'accel shift',
     key: 'l',
     id: 'key_runLaunch',
-    command: () => document.querySelector('#fx-launch_button').openMenu(true),
+    // command: () => document.querySelector('#fx-launch_button').openMenu(true),
+    command: (win,_) => { win.document.querySelector('#fx-launch_button').openMenu(true)  },
 }).autoAttach({ suppressOriginal: true });
