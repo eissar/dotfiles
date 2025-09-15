@@ -1,0 +1,10 @@
+[user]
+    email = eshaanissar@outlook.com
+    name = Eshaan Issar
+[alias]
+    rmc = rm --cached
+[core]
+    editor = nvim
+[merge]
+    tool = nvimdiff2
+
