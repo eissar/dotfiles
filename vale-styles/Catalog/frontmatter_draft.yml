@@ -1,0 +1,7 @@
+---
+extends: script
+message: "needs draft key"
+scope: text.frontmatter
+script: draftParam.tengo
+
+

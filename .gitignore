@@ -1,1 +1,9 @@
 archive/
+
+# Ignore everything in the 'styles' directory
+vale-styles/**
+# but include these
+!vale-styles/Catalog/
+!vale-styles/Catalog/**
+!vale-styles/config/
+!vale-styles/config/**

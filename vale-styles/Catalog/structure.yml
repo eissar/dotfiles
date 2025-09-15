@@ -1,0 +1,6 @@
+---
+extends: script
+message: "document requires a top level heading (only one) TODO: add code action TODO:"
+link: https://tengolang.com
+scope: raw
+script: topLevelHeading.tengo

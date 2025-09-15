@@ -1,0 +1,28 @@
+text := import("text")
+
+matches := []
+
+// Only proceed if the file starts with '---'
+if text.has_prefix(scope, "---") {
+    // Remove all code blocks so they don't interfere with line indexing
+    document := text.re_replace("(?s) *(\n```.*?```\n)", scope, "")
+
+    h1_found := false
+    h1_count := 0
+
+    for line in text.split(document, "\n") {
+        if text.re_match("^#\\s+", line) {
+            h1_found = true
+            if h1_count > 0 {
+                start := text.index(scope, line)
+                matches = append(matches, {begin: start, end: start + len(line)})
+            }
+            h1_count = h1_count + 1
+        }
+    }
+
+    // If no H1 headings were found, return a dummy match at position 1,1
+    if !h1_found {
+        matches = append(matches, {begin: 1, end: 1})
+    }
+}

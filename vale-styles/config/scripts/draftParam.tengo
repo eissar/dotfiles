@@ -1,0 +1,7 @@
+text := import("text")
+matches := []
+
+
+if text.has_prefix(scope, "title") {
+    matches = append(matches, {begin: 0, end: 5})  // highlight first 5 chars
+}

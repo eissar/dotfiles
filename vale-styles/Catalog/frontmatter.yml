@@ -1,0 +1,6 @@
+---
+extends: capitalization
+message: "'%s' should be in title case"
+level: suggestion
+scope: text.frontmatter.title
+match: $title
