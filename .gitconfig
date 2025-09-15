@@ -3,8 +3,9 @@
     name = Eshaan Issar
 [alias]
     rmc = rm --cached
+    ;rmc = rm --cached:w
 [core]
     editor = nvim
 [merge]
     tool = nvimdiff2
-
+    ;tool = nvimdiff
