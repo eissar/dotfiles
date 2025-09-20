@@ -1,0 +1,8 @@
+-glob
+!.sqlite
+
+-glob
+!.zip
+
+-glob
+!.html
