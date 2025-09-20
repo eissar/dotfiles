@@ -1,0 +1,21 @@
+
+# use a temporary directory to avoid conflicts with cloud storage and unecessary writing.
+--paths 'temp:%TEMP%' 
+--paths 'home:%CLOUD_DIR%/Video'
+--compat-options no-live-chat
+# Save as mkv
+--recode-video mkv
+
+# add metadata
+--embed-thumbnail
+--embed-metadata
+--embed-chapters
+
+# ensure eng subtitles are there (from https://www.reddit.com/r/youtubedl/comments/wpq4y0/ytdlp_how_to_ensure_download_of_english_subtitles/)
+--embed-subs
+--sub-lang "en,en-orig,en-622K5vICg3U" 
+# --compat-options no-keep-subs
+
+# naming template 
+-o %(title)s.%(ext)s
+
