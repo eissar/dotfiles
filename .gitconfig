@@ -9,3 +9,9 @@
 [merge]
     tool = nvimdiff2
     ;tool = nvimdiff
+
+[status]
+    submoduleSummary = false
+
+[diff]
+    ignoreSubmodules = all
