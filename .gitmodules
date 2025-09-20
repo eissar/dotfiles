@@ -1,6 +1,3 @@
 [submodule "nvim"]
 	path = nvim
 	url = https://github.com/eissar/init.lua
-[submodule "init.lua"]
-	path = init.lua
-	url = https://github.com/eissar/init.lua
