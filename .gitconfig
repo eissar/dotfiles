@@ -3,6 +3,7 @@
     name = Eshaan Issar
 [alias]
     rmc = rm --cached
+    stat = status
     ;rmc = rm --cached:w
 [core]
     editor = nvim
