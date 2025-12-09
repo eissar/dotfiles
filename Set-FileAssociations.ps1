@@ -12,6 +12,10 @@ if ('.FSX' -notin $pathExt) {
     $env:PATHEXT += ';.FSX'
     Write-Host 'Added .FSX to PATHEXT'
 }
+if ('.LUA' -notin $pathExt) {
+    $env:PATHEXT += ';.LUA'
+    Write-Host 'Added .FSX to PATHEXT'
+}
 
 # To make the change permanent, update the registry
 [Environment]::SetEnvironmentVariable('PATHEXT', $env:PATHEXT, 'User')
@@ -22,3 +26,9 @@ cmd /c "ftype csxfile=""C:\Users\eshaa\.dotnet\tools\dotnet-script.exe"" ""%1"""
 
 cmd /c assoc .fsx=fsxfile
 cmd /c "ftype csxfile=""C:\Users\eshaa\.dotnet\tools\dotnet-script.exe"" ""%1"""
+
+# use scoop to install lua
+cmd /c assoc .lua=luafile
+cmd /c "ftype luafile=""C:\Users\eshaa\scoop\shims\lua.exe"" ""%1"""
+
+
