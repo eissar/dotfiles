@@ -16,3 +16,12 @@
 
 [diff]
     ignoreSubmodules = all
+
+[help]
+    format = web
+
+[browser "man_hack"]
+    cmd = cat \"$@\" | wsl bash -c 'pandoc -f html -t plain | batcat -l man -pp'
+
+[web]
+    browser= man_hack
