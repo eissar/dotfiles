@@ -1,4 +1,5 @@
 archive/
+uv/
 
 # Ignore everything in the 'styles' directory
 vale-styles/**
