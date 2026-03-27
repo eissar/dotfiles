@@ -1,4 +1,4 @@
-alias bf='butterfish shell --model="@preset/sonar" --autosuggest-model="@preset/groq-kimi" -z 600000'
+alias bf='butterfish shell --model="@preset/sonar" --autosuggest-model="@preset/groq-kimi" -z 600000 -u "https://openrouter.ai/api/v1"'
 
 # alias ask='butterfish prompt --model="@preset/sonar" -z 600000'
 ask() {
@@ -22,5 +22,8 @@ ask() {
   # no-op on empty input
   [ -n "$input" ] || return 0
 
-  butterfish prompt --model="@preset/sonar" -z 600000 "$input"
+  butterfish prompt --model="@preset/sonar" -z 600000 "$input" -u "https://openrouter.ai/api/v1"
 }
+
+alias tss='tailscale switch'
+complete -W "eshaanissar@outlook.com eshaan@dttlc.com" ts-switch
