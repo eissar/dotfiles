@@ -25,5 +25,20 @@ ask() {
   butterfish prompt --model="@preset/sonar" -z 600000 "$input" -u "https://openrouter.ai/api/v1"
 }
 
-alias tss='tailscale switch'
-complete -W "eshaanissar@outlook.com eshaan@dttlc.com" ts-switch
+alias tss='sudo -k tailscale switch'
+complete -W "eshaanissar@outlook.com eshaan@dttlc.com" tss
+
+# Create a wrapper function
+edit_clean() {
+    # Bash uses FCEDIT to determine which editor 'fc' (fix command) uses
+    FCEDIT="nvim --noplugin" fc
+}
+
+# Bind Ctrl-x Ctrl-v to call that function
+# Note: '\C-x\C-v' is the syntax for the key sequence
+bind -x '"\C-x\C-v": edit_clean'
+bind -x '"\C-x,": "$EDITOR ~/.bashrc"'
+
+
+export PATH="$HOME/dbx-bin/:$PATH"
+alias scb='xclip -selection clipboard'
