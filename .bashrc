@@ -40,5 +40,7 @@ bind -x '"\C-x\C-v": edit_clean'
 bind -x '"\C-x,": "$EDITOR ~/.bashrc"'
 
 
+alias vi="nvim"
+alias ssh="TERM=xterm-256color ssh"
 export PATH="$HOME/dbx-bin/:$PATH"
 alias scb='xclip -selection clipboard'

@@ -1,3 +1,10 @@
+; NOTE: make sure to add (in ~/.gitconfig):
+;
+; [include]
+;     path = ~/dotfiles/.gitconfig
+;
+
+
 [user]
     email = eshaanissar@outlook.com
     name = Eshaan Issar
