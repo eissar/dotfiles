@@ -1,0 +1,333 @@
+#! /usr/bin/env -S deno run -A
+
+Deno.env.set("DOCKER_BUILDKIT", "1");
+
+const api = new URL(Deno.env.get("DAYTONA_API_URL") ?? "http://localhost:3000");
+if (api.pathname.endsWith("/api")) api.pathname += "/";
+const token = Deno.env.get("DAYTONA_API_KEY");
+
+function usage(): string {
+  const script = Deno.mainModule.split("/").pop();
+  return `usage: ${script} <dockerfile> [build-context] [image] [sandbox-name]
+
+Build a Daytona image locally, expose a temporary registry through Tailscale,
+push the image, and create a Daytona sandbox from it.
+
+Arguments:
+  dockerfile      Dockerfile to build. Required.
+  build-context   Build context directory. Defaults to this script's directory.
+  image           Local image name/tag. Defaults to daytona-<sandbox-name>-<uuid>:tag.
+  sandbox-name    Daytona sandbox name. Defaults to lfs-booru.
+
+Environment:
+  DAYTONA_API_URL  Daytona API URL. Defaults to http://localhost:3000.
+  DAYTONA_API_KEY  Daytona API bearer token, if required.
+  SSH_AUTH_SOCK    Required for Docker BuildKit --ssh forwarding.
+
+Requirements:
+  sudo without password, docker, tailscale, ssh-agent with a loaded key.
+
+Examples:
+  ${script} /mnt/pickle/daytona_dockerfiles/dev.Dockerfile
+  ${script} /mnt/pickle/daytona_dockerfiles/dev.Dockerfile /mnt/pickle/daytona_dockerfiles
+  ${script} dev.Dockerfile . my-image:tag my-sandbox
+`;
+}
+
+if (Deno.args.includes("-h") || Deno.args.includes("--help")) {
+  console.log(usage());
+  Deno.exit(0);
+}
+
+const dockerBin = ["sudo", "docker"];
+async function checkSudo() {
+  const { success } = await new Deno.Command("sudo", {
+    args: ["-n", "true"],
+    stdout: "null",
+    stderr: "null",
+  }).output();
+  if (!success) {
+    throw new Error("sudo is required but not available without a password");
+  }
+}
+await checkSudo();
+
+const sshAuthSock = Deno.env.get("SSH_AUTH_SOCK") ?? (() => {
+  throw new Error(
+    "SSH_AUTH_SOCK is not set. Please run: eval $(ssh-agent -s) && ssh-add",
+  );
+})();
+
+if (Deno.args.length === 0) {
+  console.error(usage());
+  Deno.exit(1);
+}
+
+const scriptDir = decodeURIComponent(new URL(".", import.meta.url).pathname);
+const dockerfile = Deno.args[0];
+const buildContext = Deno.args[1] ?? scriptDir;
+const imageArg = Deno.args[2];
+const sandboxName = Deno.args[3] ?? "lfs-booru";
+
+// Check tailscale availability
+async function checkTailscale(): Promise<void> {
+  const { success } = await new Deno.Command("tailscale", {
+    args: ["version"],
+    stdout: "null",
+    stderr: "null",
+  }).output();
+  if (!success) throw new Error("tailscale command not found or not working");
+}
+
+// Get tailscale DNS name
+async function getTailscaleDnsName(): Promise<string> {
+  const cmd = new Deno.Command("tailscale", { args: ["status", "--json"] });
+  const output = await cmd.output();
+  if (!output.success) throw new Error("Failed to get tailscale status");
+
+  const status = JSON.parse(new TextDecoder().decode(output.stdout));
+  const dnsName = status.Self?.DNSName;
+  if (!dnsName) throw new Error("Could not determine tailscale DNS name");
+
+  // Remove trailing dot if present
+  return dnsName.replace(/\.$/, "");
+}
+
+// Check if port 443 is already in use by tailscale serve
+async function isPort443Served(): Promise<boolean> {
+  const cmd = new Deno.Command("tailscale", {
+    args: ["serve", "status", "--json"],
+  });
+  const output = await cmd.output();
+  if (!output.success) return false;
+
+  const status = JSON.parse(new TextDecoder().decode(output.stdout));
+  // Check if there's any serve config that uses port 443
+  return Object.keys(status).some((key) => {
+    const config = status[key];
+    return config?.TCP === 443 || config?.HTTPS === 443;
+  });
+}
+
+// Generate dynamic image name
+function generateImageName(sandboxName: string): string {
+  const uuid = crypto.randomUUID().slice(0, 8);
+  return `daytona-${sandboxName}-${uuid}:tag`;
+}
+
+const image = imageArg ?? generateImageName(sandboxName);
+const tailscaleDnsName = await getTailscaleDnsName();
+const remoteImage = `${tailscaleDnsName}/${image}`;
+const registryUrl = `http://localhost:6000`;
+
+async function portOpen(): Promise<boolean> {
+  try {
+    const res = await fetch(`${registryUrl}/v2/`);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function run(cmd: string, args: string[]) {
+  const proc = new Deno.Command(cmd, {
+    args,
+    stdout: "inherit",
+    stderr: "inherit",
+  }).spawn();
+  const status = await proc.status;
+  if (!status.success) {
+    throw new Error(
+      `${cmd} ${args.join(" ")} failed with exit code ${status.code}`,
+    );
+  }
+}
+
+async function runQuiet(cmd: string, args: string[]) {
+  await new Deno.Command(cmd, { args, stdout: "null", stderr: "null" })
+    .output();
+}
+
+async function docker(...args: string[]) {
+  const env = { ...Deno.env.toObject(), SSH_AUTH_SOCK: sshAuthSock };
+  const proc = new Deno.Command(dockerBin[0], {
+    args: [...dockerBin.slice(1), ...args],
+    env: env,
+    stdout: "inherit",
+    stderr: "inherit",
+  }).spawn();
+  const status = await proc.status;
+  if (!status.success) {
+    throw new Error(
+      `docker ${args.join(" ")} failed with exit code ${status.code}`,
+    );
+  }
+}
+
+async function dockerQuiet(...args: string[]) {
+  await runQuiet(dockerBin[0], [...dockerBin.slice(1), ...args]);
+}
+
+async function tailscale(...args: string[]) {
+  await run("sudo", ["tailscale", ...args]);
+}
+
+async function tailscaleQuiet(...args: string[]) {
+  await runQuiet("sudo", ["tailscale", ...args]);
+}
+
+async function waitForRegistry() {
+  for (let i = 0; i < 30; i++) {
+    if (!(await portOpen())) {
+      await sleep(1000);
+      continue;
+    }
+    return;
+  }
+  throw new Error("registry did not become ready");
+}
+
+async function deleteFromRegistry(img: string) {
+  try {
+    const tagRes = await fetch(`${registryUrl}/v2/${img}/tags/list`);
+    if (!tagRes.ok) return;
+    const tags = (await tagRes.json()).tags as string[] | null;
+    if (!tags) return;
+    for (const tag of tags) {
+      const head = await fetch(`${registryUrl}/v2/${img}/manifests/${tag}`, {
+        headers: {
+          Accept: "application/vnd.docker.distribution.manifest.v2+json",
+        },
+      });
+      const digest = head.headers.get("docker-content-digest");
+      if (digest) {
+        await fetch(`${registryUrl}/v2/${img}/manifests/${digest}`, {
+          method: "DELETE",
+        });
+      }
+    }
+  } catch {}
+}
+
+async function getSandbox(id: string) {
+  const res = await fetch(new URL(`sandbox/${id}`, api), {
+    headers: token ? { authorization: `Bearer ${token}` } : undefined,
+  });
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Check prerequisites
+await checkTailscale();
+if (await isPort443Served()) {
+  throw new Error(
+    "Port 443 is already served by tailscale. Please run 'tailscale serve reset' first.",
+  );
+}
+
+// Belt-and-suspenders: reap any leftovers from a previously-killed run,
+// since `finally` doesn't run on SIGKILL / power loss.
+await dockerQuiet("network", "rm", "daytona_daytona-network");
+await dockerQuiet("rm", "-f", "test-registry");
+
+const portLive = await portOpen();
+if (portLive) {
+  throw new Error(`port 6000 already in use; stop the existing service first`);
+}
+
+// Start tailscale serve - simpler approach without path
+await tailscale("serve", "--bg", "http://127.0.0.1:6000");
+
+// Wait a moment for serve to activate
+await sleep(2000);
+
+// Verify serve is active
+const serveStatus = await new Deno.Command("tailscale", {
+  args: ["serve", "status", "--json"],
+}).output();
+const statusJson = JSON.parse(new TextDecoder().decode(serveStatus.stdout));
+if (Object.keys(statusJson).length === 0) {
+  throw new Error("Tailscale serve failed to activate");
+}
+
+try {
+  await docker("network", "create", "daytona_daytona-network");
+  await docker(
+    "run",
+    "-d",
+    "--name",
+    "test-registry",
+    "--network",
+    "daytona_daytona-network",
+    "--network-alias",
+    "test-registry",
+    "-p",
+    "6000:6000",
+    "-e",
+    "REGISTRY_HTTP_ADDR=:6000",
+    "-e",
+    "REGISTRY_STORAGE_DELETE_ENABLED=true",
+    "registry:2",
+  );
+  await waitForRegistry();
+
+  await docker(
+    "build",
+    "-f",
+    dockerfile,
+    "-t",
+    remoteImage,
+    "--ssh",
+    `default=${sshAuthSock}`,
+    buildContext,
+  );
+  await docker("push", remoteImage);
+
+  const createRes = await fetch(new URL("sandbox", api), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      name: sandboxName,
+      buildInfo: {
+        dockerfileContent: `FROM ${remoteImage}\n`,
+      },
+    }),
+  });
+  if (!createRes.ok) throw new Error(await createRes.text());
+  const created = await createRes.json();
+  console.log(JSON.stringify(created, null, 2));
+
+  const sandboxId = created.id as string | undefined;
+  if (!sandboxId) throw new Error("sandbox create response missing id");
+
+  const terminal = new Set([
+    "started",
+    "failed",
+    "build_failed",
+    "error",
+    "destroyed",
+  ]);
+  for (let i = 0; i < 300; i++) {
+    const sandbox = await getSandbox(sandboxId);
+    if (sandbox && terminal.has(String(sandbox.state))) {
+      console.log(JSON.stringify(sandbox, null, 2));
+      if (sandbox.state !== "started") {
+        throw new Error(`sandbox ended in state ${sandbox.state}`);
+      }
+      break;
+    }
+    await sleep(2000);
+  }
+} finally {
+  await deleteFromRegistry(image);
+  await tailscaleQuiet("serve", "reset");
+  await dockerQuiet("rm", "-f", "test-registry");
+  await dockerQuiet("network", "rm", "daytona_daytona-network");
+}

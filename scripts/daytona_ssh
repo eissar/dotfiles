@@ -1,60 +1,205 @@
 #!/usr/bin/env -S deno run -A
+import { parseArgs } from "https://deno.land/std@0.224.0/cli/parse_args.ts";
 
-const token = new TextDecoder()
-  .decode((await new Deno.Command("get_daytona_ssh_tok").output()).stdout)
-  .trim();
+const SERVER = "100.96.187.68";
 
-if (!token) {
-  console.error("Failed to obtain SSH access token");
-  Deno.exit(1);
+async function addSshKeys(): Promise<Record<string, string> | null> {
+  let agentEnv: Record<string, string> = {};
+  const existingSock = Deno.env.get("SSH_AUTH_SOCK");
+  const existingPid = Deno.env.get("SSH_AGENT_PID");
+
+  if (existingSock) {
+    agentEnv.SSH_AUTH_SOCK = existingSock;
+    if (existingPid) agentEnv.SSH_AGENT_PID = existingPid;
+  } else {
+    const agent = await new Deno.Command("ssh-agent", {
+      args: ["-s"],
+      stdout: "piped",
+      stderr: "inherit",
+    }).output();
+
+    if (!agent.success) return null;
+
+    const agentOutput = new TextDecoder().decode(agent.stdout);
+    for (const key of ["SSH_AUTH_SOCK", "SSH_AGENT_PID"]) {
+      const match = agentOutput.match(new RegExp(`${key}=([^;]+);`));
+      if (match) agentEnv[key] = match[1];
+    }
+  }
+
+  if (!agentEnv.SSH_AUTH_SOCK) return null;
+
+  for (const [key, value] of Object.entries(agentEnv)) Deno.env.set(key, value);
+
+  const add = new Deno.Command("ssh-add", {
+    env: { ...Deno.env.toObject(), ...agentEnv },
+    stdin: "inherit",
+    stdout: "inherit",
+    stderr: "inherit",
+  }).spawn();
+
+  const status = await add.status;
+  if (!status.success) return null;
+
+  return agentEnv;
 }
 
-const xpraAbort = new AbortController();
-const cleanup = () => xpraAbort.abort();
+// just do so we can do using instead of try/ finally
+class Xpra {
+  token: string;
+  process: Deno.ChildProcess;
+  status: Promise<Deno.CommandStatus>;
 
-const logPath = "/tmp/daytona-xpra.log";
-const log = await Deno.open(logPath, {
-  create: true,
-  append: true,
-  write: true,
-});
+  constructor(token: string) {
+    this.token = token;
+    this.process = new Deno.Command("xpra", {
+      args: [
+        "start",
+        `ssh:${this.token}@${SERVER}:2222/100`,
+        "--daemon=no",
+        "--printing=no",
+        "--audio=no",
+        "--webcam=no",
+      ],
+      stdin: "null",
+      stdout: "null",
+      stderr: "null",
+    }).spawn();
+    this.status = this.process.status;
+  }
 
-const xpra = new Deno.Command("xpra", {
-  args: [
-    "attach",
-    "--ssh=ssh -p 2222",
-    `ssh://${token}@100.96.187.68/50`,
-  ],
-  stdin: "null",
-  stdout: "piped",
-  stderr: "piped",
-  signal: xpraAbort.signal,
-}).spawn();
-
-xpra.stdout.pipeTo(log.writable, { preventClose: true }).catch(() => {});
-xpra.stderr.pipeTo(log.writable, { preventClose: true }).catch(() => {});
-
-const xpraStatus = xpra.status
-xpraStatus
-  .then((status) => {
-    if (!status.success && !xpraAbort.signal.aborted) {
-      console.error(`xpra exited with ${status.code}; see log: ${logPath}`);
+  [Symbol.dispose]() {
+    try {
+      this.process.kill();
+    } catch {
+      // The process may already have exited by the time disposal runs.
     }
-  })
-  .finally(() => log.close());
+    this.status.catch(() => {});
+  }
+}
 
-Deno.addSignalListener("SIGINT", cleanup);
-Deno.addSignalListener("SIGTERM", cleanup);
-Deno.addSignalListener("SIGHUP", cleanup);
+async function main(): Promise<number> {
+  const args = parseArgs(Deno.args, { string: ["id"] });
+  const inputId = args.id ?? "lfs-booru";
 
-const ssh = new Deno.Command("ssh", {
-  args: ["-p", "2222", `${token}@100.96.187.68`],
-  stdin: "inherit",
-  stdout: "inherit",
-  stderr: "inherit",
-}).spawn();
+  // Resolve ID (supports both ID and name)
+  const sandboxIdCmd = new Deno.Command("bash", {
+    args: [
+      "-c",
+      `daytona list -f json | jq -r --arg id "${inputId}" '
+      .items[]
+      | select(.id == $id or .name == $id)
+      | .id
+      | select(. != null)
+      | limit(1; .)
+    '`,
+    ],
+    stdout: "piped",
+    stderr: "piped",
+  });
+  const sandboxIdResult = await sandboxIdCmd.output();
+  if (sandboxIdResult.code !== 0) {
+    console.error(new TextDecoder().decode(sandboxIdResult.stderr));
+    return sandboxIdResult.code;
+  }
+  const sandboxId = new TextDecoder().decode(sandboxIdResult.stdout).trim();
 
-const status = await ssh.status;
-cleanup();
-await xpraStatus.catch(() => {});
-Deno.exit(status.code);
+  if (!sandboxId) {
+    console.error(`No sandbox found with id or name '${inputId}'`);
+    return 1;
+  }
+
+  // Check state
+  const stateCmd = new Deno.Command("bash", {
+    args: [
+      "-c",
+      `daytona list -f json | jq -r --arg id "${sandboxId}" '
+      .items[] | select(.id == $id) | .state
+    '`,
+    ],
+    stdout: "piped",
+    stderr: "piped",
+  });
+  const stateResult = await stateCmd.output();
+  if (stateResult.code !== 0) {
+    console.error(new TextDecoder().decode(stateResult.stderr));
+    return stateResult.code;
+  }
+  const state = new TextDecoder().decode(stateResult.stdout).trim();
+
+  if (state !== "started") {
+    console.error(
+      `sandbox '${inputId}' (id: ${sandboxId}) has state '${state}' but expected 'started'`,
+    );
+    console.error(`start with:\n\n\tdaytona start ${sandboxId}`);
+    return 1;
+  }
+
+  // Get SSH token
+  const apiUrl = Deno.env.get("DAYTONA_API_URL");
+  const apiKey = Deno.env.get("DAYTONA_API_KEY");
+
+  if (!apiUrl || !apiKey) {
+    console.error("DAYTONA_API_URL or DAYTONA_API_KEY is not set");
+    return 1;
+  }
+
+  const resp = await fetch(
+    `${apiUrl}/sandbox/${sandboxId}/ssh-access?expiresInMinutes=60`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}` },
+    },
+  );
+
+  if (!resp.ok) {
+    console.error(`Failed to obtain SSH access token: HTTP ${resp.status}`);
+    return 1;
+  }
+
+  const body = await resp.json();
+  const token = body.token;
+
+  if (!token) {
+    console.error("Failed to obtain SSH access token: no token in response");
+    return 1;
+  }
+
+  using xpra = new Xpra(token);
+
+  let agentEnv: Record<string, string> | null = null;
+  if (confirm("Add SSH keys for git via agent forwarding?")) {
+    agentEnv = await addSshKeys();
+    if (!agentEnv) {
+      console.error("ssh-add failed; continuing without agent forwarding");
+    }
+  }
+
+  const sshArgs = [
+    "-p",
+    "2222",
+    "-o",
+    "RequestTTY=force",
+    "-o",
+    "SetEnv=DISPLAY=:100",
+  ];
+  if (agentEnv) {
+    sshArgs.push("-A", "-o", `IdentityAgent=${agentEnv.SSH_AUTH_SOCK}`);
+  }
+  sshArgs.push(`${token}@${SERVER}`);
+
+  const ssh = new Deno.Command("ssh", {
+    args: sshArgs,
+    env: agentEnv ? { ...Deno.env.toObject(), ...agentEnv } : undefined,
+    stdin: "inherit",
+    stdout: "inherit",
+    stderr: "inherit",
+  }).spawn();
+
+  const status = await ssh.status;
+  return status.code;
+}
+
+if (import.meta.main) {
+  Deno.exitCode = await main();
+}
