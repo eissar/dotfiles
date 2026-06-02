@@ -1,0 +1,60 @@
+#!/usr/bin/env -S deno run -A
+
+const token = new TextDecoder()
+  .decode((await new Deno.Command("get_daytona_ssh_tok").output()).stdout)
+  .trim();
+
+if (!token) {
+  console.error("Failed to obtain SSH access token");
+  Deno.exit(1);
+}
+
+const xpraAbort = new AbortController();
+const cleanup = () => xpraAbort.abort();
+
+const logPath = "/tmp/daytona-xpra.log";
+const log = await Deno.open(logPath, {
+  create: true,
+  append: true,
+  write: true,
+});
+
+const xpra = new Deno.Command("xpra", {
+  args: [
+    "attach",
+    "--ssh=ssh -p 2222",
+    `ssh://${token}@100.96.187.68/50`,
+  ],
+  stdin: "null",
+  stdout: "piped",
+  stderr: "piped",
+  signal: xpraAbort.signal,
+}).spawn();
+
+xpra.stdout.pipeTo(log.writable, { preventClose: true }).catch(() => {});
+xpra.stderr.pipeTo(log.writable, { preventClose: true }).catch(() => {});
+
+const xpraStatus = xpra.status
+xpraStatus
+  .then((status) => {
+    if (!status.success && !xpraAbort.signal.aborted) {
+      console.error(`xpra exited with ${status.code}; see log: ${logPath}`);
+    }
+  })
+  .finally(() => log.close());
+
+Deno.addSignalListener("SIGINT", cleanup);
+Deno.addSignalListener("SIGTERM", cleanup);
+Deno.addSignalListener("SIGHUP", cleanup);
+
+const ssh = new Deno.Command("ssh", {
+  args: ["-p", "2222", `${token}@100.96.187.68`],
+  stdin: "inherit",
+  stdout: "inherit",
+  stderr: "inherit",
+}).spawn();
+
+const status = await ssh.status;
+cleanup();
+await xpraStatus.catch(() => {});
+Deno.exit(status.code);

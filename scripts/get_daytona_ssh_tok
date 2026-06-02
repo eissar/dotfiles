@@ -1,0 +1,60 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+
+my $input_id;
+GetOptions("id=s" => \$input_id) or die "Usage: $0 --id <id-or-name>\n";
+
+$input_id //= 'lfs-booru';
+
+# Resolve ID (supports both ID and name)
+my $SANDBOX_ID = `daytona list -f json | jq -r --arg id "$input_id" '
+    .items[] 
+    | select(.id == \$id or .name == \$id) 
+    | .id
+    | select(. != null)
+    | limit(1; .)
+'`;
+
+chomp($SANDBOX_ID);
+
+if ($SANDBOX_ID eq "") {
+    warn "No sandbox found with id or name '$input_id'\n";
+    exit 1;
+}
+
+# Check state
+my $state = `daytona list -f json | jq -r --arg id "$SANDBOX_ID" '
+    .items[] | select(.id == \$id) | .state
+'`;
+chomp($state);
+
+if ($state ne "started") {
+    warn "sandbox '$input_id' (id: $SANDBOX_ID) has state '$state' but expected 'started'\n";
+    warn "start with:\n\n";
+    warn "\tdaytona start $SANDBOX_ID\n";
+    exit 1;
+}
+
+# Get SSH token
+my $url = $ENV{DAYTONA_API_URL};
+my $key = $ENV{DAYTONA_API_KEY};
+
+if (!$url || !$key) {
+    warn "DAYTONA_API_URL or DAYTONA_API_KEY is not set\n";
+    exit 1;
+}
+
+my $TOKEN = `curl -s -X POST "$url/sandbox/$SANDBOX_ID/ssh-access?expiresInMinutes=60" -H "Authorization: Bearer $key" | jq -er '.token'`;
+
+chomp($TOKEN);
+
+if ($TOKEN eq "") {
+    warn "Failed to obtain SSH access token\n";
+    exit 1;
+}
+
+print "$TOKEN\n";
+exit 0;
