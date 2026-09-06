@@ -1,0 +1,11 @@
+# Ignore secrets and transient files in dotfiles if any accidentally land here
+auth*.json
+models-store.json
+trust.json
+run-history.jsonl
+sessions/
+missions/
+npm/
+git/
+node_modules/
+*.log

@@ -1,0 +1,9 @@
+{
+	"providers": {
+		"openrouter": {
+			"compat": {
+				"sendSessionAffinityHeaders": true
+			}
+		}
+	}
+}

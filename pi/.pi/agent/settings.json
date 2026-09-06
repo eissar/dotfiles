@@ -1,0 +1,59 @@
+{
+  "lastChangelogVersion": "0.84.2",
+  "defaultProvider": "antigravity",
+  "defaultModel": "gemini-3.8-flash",
+  "defaultThinkingLevel": "low",
+  "packages": [
+    "npm:pi-subagents",
+    "npm:@ifi/pi-plan@0.5.1",
+    "npm:@eissar/pi-openrouter-session",
+    "npm:pi-antigravity"
+  ],
+  "enabledModels": [
+    "openrouter/inception/mercury-2.5-preview",
+    "openrouter/xiaomi/mimo-v2.5-pro",
+    "openai-codex/gpt-6-astra",
+    "antigravity/gemini-3.8-flash",
+    "antigravity/gemini-3.7-flash"
+  ],
+  "enableInstallTelemetry": false,
+  "quietStartup": true,
+  "subagents": {
+    "agentOverrides": {
+      "reviewer": {
+        "model": "openrouter/deepseek/deepseek-v4-pro",
+        "thinking": "high",
+        "inheritProjectContext": false
+      },
+      "scout": {
+        "model": "openrouter/deepseek/deepseek-v4-flash",
+        "thinking": "high"
+      },
+      "worker": {
+        "model": "openrouter/owl-alpha",
+        "thinking": "high",
+        "disabled": true
+      },
+      "researcher": {
+        "disabled": false,
+        "tools": [
+          "read",
+          "write",
+          "web_search",
+          "fetch_content",
+          "get_search_content",
+          "intercom",
+          "mcp:deepwiki/*"
+        ]
+      },
+      "oracle": {
+        "disabled": true
+      },
+      "delegate": {
+        "disabled": true
+      }
+    }
+  },
+  "theme": "dark",
+  "hideThinkingBlock": true
+}
