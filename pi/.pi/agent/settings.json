@@ -21,12 +21,12 @@
   "subagents": {
     "agentOverrides": {
       "reviewer": {
-        "model": "openrouter/deepseek/deepseek-v4-pro",
+        "model": "antigravity/gemini-3.7-flash",
         "thinking": "high",
         "inheritProjectContext": false
       },
       "scout": {
-        "model": "openrouter/deepseek/deepseek-v4-flash",
+        "model": "antigravity/gemini-3.7-flash",
         "thinking": "high"
       },
       "worker": {
