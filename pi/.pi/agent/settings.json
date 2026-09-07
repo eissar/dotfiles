@@ -1,14 +1,14 @@
 {
-  "lastChangelogVersion": "0.84.2",
-  "defaultProvider": "antigravity",
-  "defaultModel": "gemini-3.8-flash",
+  "lastChangelogVersion": "0.85.1",
+  "defaultProvider": "cerebras",
+  "defaultModel": "qwen-3.8-27b",
   "defaultThinkingLevel": "medium",
   "packages": [
-    "npm:pi-subagents",
     "npm:pi-mcp-adapter",
     "npm:@ifi/pi-plan@0.5.1",
     "npm:@eissar/pi-openrouter-session",
-    "npm:pi-antigravity"
+    "npm:pi-antigravity",
+    "npm:@eggmasonvalue/pi-subagent"
   ],
   "enabledModels": [
     "openrouter/inception/mercury-2.5-preview",
@@ -20,42 +20,6 @@
   ],
   "enableInstallTelemetry": false,
   "quietStartup": true,
-  "subagents": {
-    "agentOverrides": {
-      "reviewer": {
-        "model": "antigravity/gemini-3.7-flash",
-        "thinking": "high",
-        "inheritProjectContext": false
-      },
-      "scout": {
-        "model": "antigravity/gemini-3.7-flash",
-        "thinking": "high"
-      },
-      "worker": {
-        "model": "openrouter/owl-alpha",
-        "thinking": "high",
-        "disabled": true
-      },
-      "researcher": {
-        "disabled": false,
-        "tools": [
-          "read",
-          "write",
-          "web_search",
-          "fetch_content",
-          "get_search_content",
-          "intercom",
-          "mcp:deepwiki/*"
-        ]
-      },
-      "oracle": {
-        "disabled": true
-      },
-      "delegate": {
-        "disabled": true
-      }
-    }
-  },
   "theme": "dark",
   "hideThinkingBlock": true
 }
