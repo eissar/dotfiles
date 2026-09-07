@@ -1,10 +1,11 @@
 {
   "lastChangelogVersion": "0.84.2",
-  "defaultProvider": "cerebras",
-  "defaultModel": "qwen-3.8-27b",
-  "defaultThinkingLevel": "high",
+  "defaultProvider": "antigravity",
+  "defaultModel": "gemini-3.8-flash",
+  "defaultThinkingLevel": "medium",
   "packages": [
     "npm:pi-subagents",
+    "npm:pi-mcp-adapter",
     "npm:@ifi/pi-plan@0.5.1",
     "npm:@eissar/pi-openrouter-session",
     "npm:pi-antigravity"
