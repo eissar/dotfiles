@@ -1,8 +1,8 @@
 {
   "lastChangelogVersion": "0.84.2",
-  "defaultProvider": "antigravity",
-  "defaultModel": "gemini-3.8-flash",
-  "defaultThinkingLevel": "low",
+  "defaultProvider": "cerebras",
+  "defaultModel": "qwen-3.8-27b",
+  "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-subagents",
     "npm:@ifi/pi-plan@0.5.1",
@@ -14,7 +14,8 @@
     "openrouter/xiaomi/mimo-v2.5-pro",
     "openai-codex/gpt-6-astra",
     "antigravity/gemini-3.8-flash",
-    "antigravity/gemini-3.7-flash"
+    "antigravity/gemini-3.7-flash",
+    "cerebras/qwen-3.8-27b"
   ],
   "enableInstallTelemetry": false,
   "quietStartup": true,
