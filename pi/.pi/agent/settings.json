@@ -4,7 +4,6 @@
   "defaultModel": "qwen-3.8-27b",
   "defaultThinkingLevel": "medium",
   "packages": [
-    "npm:pi-mcp-adapter",
     "npm:@ifi/pi-plan@0.5.1",
     "npm:@eissar/pi-openrouter-session",
     "npm:pi-antigravity",
