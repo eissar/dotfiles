@@ -1,0 +1,4 @@
+-- https://github.com/jeetsukumaran/vim-buffergator/blob/master/doc/buffergator.txt
+--
+
+vim.g.buffergator_viewport_split_policy = "B"

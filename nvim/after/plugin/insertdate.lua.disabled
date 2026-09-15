@@ -1,0 +1,11 @@
+function insertDate()
+	-- Get the current buffer's name without the extension
+	local date_iso = os.date("%Y-%m-%d")
+	-- Insert the filename before the cursor position
+	vim.api.nvim_put({date_iso}, '', true, true)
+end
+
+
+
+
+

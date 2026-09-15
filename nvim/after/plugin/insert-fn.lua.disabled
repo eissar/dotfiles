@@ -1,0 +1,9 @@
+function insertFilename(fname)
+	-- Get the current buffer's name without the extension
+	local filename = vim.fn.expand('%:t:r') or fname
+	-- Insert the filename before the cursor position
+	vim.api.nvim_put({filename}, '', true, true)
+end
+
+
+

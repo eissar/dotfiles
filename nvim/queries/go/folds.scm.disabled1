@@ -1,0 +1,7 @@
+; extends
+
+(
+  ((comment) @_start (#lua-match? @_start "^// #region")) @start_name
+  ((comment) @_end (#lua-match? @_end "^// #endregion")) @end_name @fold
+  (#match_region? @start_name @end_name)
+) @fold

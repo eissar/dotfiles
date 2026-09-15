@@ -1,0 +1,82 @@
+local cmp = require 'cmp'
+local config = require 'cmp.config'
+local window = require 'cmp.utils.window'
+local cmp_docs_view = require 'cmp.view.docs_view'
+local function mock_markdown(bufnr, contents, opts)
+    vim.validate {
+        contents = { contents, 't' },
+        opts = { opts, 't', true },
+    }
+    -- do no formatting.
+    local text = table.concat(contents, '\n')
+    local processed_contents = vim.split(text, '\n', { trimempty = true })
+    -- set buffer lines
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, processed_contents)
+
+    -- ?
+    return processed_contents
+end
+
+---Open documentation window
+---@param e cmp.Entry
+---@param view cmp.WindowStyle
+cmp_docs_view.open = function(self, e, view)
+    print 'running custom'
+    local documentation = config.get().window.documentation
+    if not documentation then
+        --documentation
+        return
+    end
+
+    if not e or not view then
+        return self:close()
+    end
+
+    local border_info = window.get_border_info { style = documentation }
+    local right_space = vim.o.columns - (view.col + view.width) - 1
+    local left_space = view.col - 1
+    local max_width = math.max(left_space, right_space)
+    if documentation.max_width > 0 then
+        max_width = math.min(documentation.max_width, max_width)
+    end
+
+    -- Update buffer content if needed.
+    if not self.entry or e.id ~= self.entry.id then
+        local documents = e:get_documentation()
+        if #documents == 0 then
+            return self:close()
+        end
+
+        self.entry = e
+        vim.api.nvim_buf_call(self.window:get_buffer(), function()
+            vim.cmd [[syntax clear]]
+            vim.api.nvim_buf_set_lines(self.window:get_buffer(), 0, -1, false, {})
+        end)
+        local opts = {
+            max_width = max_width - border_info.horiz,
+        }
+        if documentation.max_height > 0 then
+            opts.max_height = documentation.max_height
+        end
+        vim.lsp.util.stylize_markdown(self.window:get_buffer(), documents, opts)
+        -- mock_markdown(self.window:get_buffer(), documents, opts)
+    end
+end
+
+-- try basic
+cmp_docs_view.open = function(self, e, view)
+    print 'running test'
+
+    local documents = e:get_documentation()
+    if #documents == 0 then
+        print 'no docs'
+        return self:close()
+    end
+
+    local opts = {
+        -- max_width = max_width - border_info.horiz,
+    }
+
+    -- vim.lsp.util.stylize_markdown(self.window:get_buffer(), documents, opts)
+    mock_markdown(self.window:get_buffer(), documents, opts)
+end

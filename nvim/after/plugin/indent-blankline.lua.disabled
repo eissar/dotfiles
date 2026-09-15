@@ -1,0 +1,22 @@
+local highlight = {
+    "CursorColumn",
+}
+require("ibl").setup {
+    indent = {
+        tab_char = { "a", "b", "c" },
+        highlight = { "Function", "Label" },
+        smart_indent_cap = true,
+        priority = 2,
+        repeat_linebreak = false,
+    },
+    whitespace = {
+        remove_blankline_trail = true,
+    },
+    scope = { enabled = false },
+}
+
+
+
+
+
+

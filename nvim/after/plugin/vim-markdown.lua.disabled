@@ -1,0 +1,4 @@
+vim.cmd 'let g:vim_markdown_no_default_key_mappings = 1'
+vim.cmd 'let g:vim_markdown_folding_disabled = 1'
+vim.cmd 'let g:vim_markdown_override_foldtext = 0'
+vim.cmd 'let g:vim_markdown_follow_anchor = 1'

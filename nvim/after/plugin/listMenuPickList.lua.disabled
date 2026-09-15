@@ -1,0 +1,56 @@
+function showPopupPickList(filePath)
+    local filePath = os.getenv("USERPROFILE") .. filePath
+    local buf = vim.api.nvim_create_buf(false, true)
+    local file = io.open(filePath, "r")
+    local lines = {}
+
+    if file then
+        for line in file:lines() do
+            table.insert(lines, line) -- Insert each line into the table
+        end
+        file:close() -- Close the file after reading
+    else
+        error("Could not open file: " .. filePath)
+    end
+
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+    local width = 30
+    local height = math.ceil((vim.o.lines - (vim.o.lines/4)))
+    local row = math.ceil((vim.o.lines - height) / 2) - 1 -- center the popup vertically
+    local col = math.ceil((vim.o.columns - width) / 2) -- center the popup horizontally
+
+    -- Define the window options
+    local opts = {
+        relative = "editor", -- position relative to the Neovim editor window
+        width = width,
+        height = height,
+        row = row,
+        col = col,
+        style = "minimal", -- use minimal styling (no line numbers, end-of-buffer tildes, etc.)
+        border = "rounded", -- use a rounded border for the popup
+    }
+
+    -- Create the floating window with the buffer attached
+    local win = vim.api.nvim_open_win(buf, true, opts)
+    -- Add a buffer-local keymap to close the window with 'q'
+    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', '', {
+        noremap = true,
+        silent = true,
+        callback = function()
+            vim.api.nvim_win_close(win, true)
+        end,
+    })
+
+    vim.api.nvim_buf_set_keymap(buf, 'n', '<Enter>', '', {
+        noremap = true,
+        silent = true,
+        callback = function()
+            local currentLineContent = vim.api.nvim_get_current_line()
+            vim.api.nvim_win_close(win, true)
+            vim.api.nvim_put({currentLineContent}, '', true, true)
+        end,
+    })
+    -- Get the content of the current line
+    local currentLineContent = vim.fn.getline(vim.fn.line("."))
+
+end

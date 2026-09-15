@@ -1,0 +1,2 @@
+-- print 'test'
+-- vim.cmd [[SQLSetType tsql]]
