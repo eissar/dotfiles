@@ -26,6 +26,7 @@ interface Candidate {
   id: string;
   label: string;
   haystack: string;
+  isUser: boolean;
 }
 
 const MAX_ITEMS = 1000;
@@ -39,6 +40,10 @@ export default function (pi: ExtensionAPI) {
         ctx.ui.notify("/find requires interactive TUI mode", "error");
         return;
       }
+
+      // Captured from the custom() factory so the jump can use the renderer
+      // after the picker closes. The renderer is a Proxy over the live TUI.
+      let tuiRef: any = null;
 
       const candidates: Candidate[] = [];
 
@@ -56,6 +61,7 @@ export default function (pi: ExtensionAPI) {
           id: entry.id,
           label: `${role}: ${preview}`,
           haystack: `${role} ${text}`.toLowerCase(),
+          isUser: role === "user",
         });
 
         if (candidates.length >= MAX_ITEMS) break;
@@ -67,6 +73,7 @@ export default function (pi: ExtensionAPI) {
       }
 
       const chosenId = await ctx.ui.custom<string | null>((tui, theme, kb, done) => {
+        tuiRef = tui;
         const listTheme = {
           selectedPrefix: (text: string) => theme.fg("accent", text),
           selectedText: (text: string) => theme.fg("accent", text),
@@ -173,9 +180,56 @@ export default function (pi: ExtensionAPI) {
 
       if (chosenId === null || chosenId === undefined) return;
 
-      // navigateTree moves the leaf, so continuing from here branches.
-      const { cancelled } = await ctx.navigateTree(chosenId);
-      if (!cancelled) ctx.ui.notify("Moved to match", "info");
+      // Jump to the entry in the terminal without touching session state.
+      // navigateTree would move the leaf and redraw the transcript for a new
+      // branch, which is precisely what we are avoiding here.
+      const target = candidates.find((c) => c.id === chosenId);
+      const isUser = target?.isUser ?? false;
+
+      // Ordinal among user messages: what scrollToPrompt can actually address.
+      const ordinal = candidates.filter((c) => c.isUser).findIndex((c) => c.id === chosenId);
+
+      if (scrollToEntry(tuiRef, isUser, ordinal)) {
+        ctx.ui.notify("Scrolled to match in transcript", "info");
+        return;
+      }
+
+      // No scroll happened: session state is untouched either way.
+      ctx.ui.notify(
+        isUser
+          ? "Could not scroll (alt-screen TUI required). Transcript unchanged."
+          : "In-terminal jump only lands on user prompts. Transcript unchanged.",
+        "info",
+      );
     },
   });
+}
+
+/**
+ * Scroll the transcript viewport to a user prompt by ordinal.
+ *
+ * The alt-screen renderer exposes scrollToPrompt(direction), which scans the
+ * rendered line buffer for OSC 133 prompt-start markers. Only user messages
+ * emit those (components/user-message.js), so this can step between prompts but
+ * cannot address an arbitrary entry by id.
+ *
+ * scrollToPrompt steps relative to the current viewport position, so we go to
+ * the top first and then step forward `ordinal` times.
+ *
+ * scrollToPrompt is not part of the published TUI interface and does not exist
+ * in regular (non-fullscreen) TUI mode, hence the feature detection.
+ */
+function scrollToEntry(tui: any, isUser: boolean, ordinal: number): boolean {
+  if (!tui || typeof tui.scrollToPrompt !== "function") return false;
+  if (!isUser || ordinal < 0) return false;
+
+  try {
+    if (typeof tui.scrollToTop === "function") tui.scrollToTop();
+    for (let i = 0; i < ordinal; i += 1) {
+      tui.scrollToPrompt(1);
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
