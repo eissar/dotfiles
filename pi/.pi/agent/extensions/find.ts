@@ -66,7 +66,7 @@ export default function (pi: ExtensionAPI) {
         return;
       }
 
-      const chosenId = await ctx.ui.custom<string | null>((tui, theme, _kb, done) => {
+      const chosenId = await ctx.ui.custom<string | null>((tui, theme, kb, done) => {
         const listTheme = {
           selectedPrefix: (text: string) => theme.fg("accent", text),
           selectedText: (text: string) => theme.fg("accent", text),
@@ -90,6 +90,13 @@ export default function (pi: ExtensionAPI) {
         let selectList: SelectList;
         let visibleCount = candidates.length;
         let selectedIndex = 0;
+        let matchedCount = candidates.length;
+
+        const moveSelection = (delta: number) => {
+          if (matchedCount === 0) return;
+          selectedIndex = (selectedIndex + delta + matchedCount) % matchedCount;
+          selectList?.setSelectedIndex(selectedIndex);
+        };
 
         // SelectList only filters on `value.startsWith(...)`, which cannot do
         // substring search over message text. So we filter ourselves and hand
@@ -101,6 +108,7 @@ export default function (pi: ExtensionAPI) {
             : candidates.filter((c) => tokens.every((t) => c.haystack.includes(t)));
 
           visibleCount = matched.length;
+          matchedCount = matched.length;
 
           const items: SelectItem[] = matched.map((c) => ({ value: c.id, label: c.label }));
           selectList = new SelectList(items, VISIBLE, listTheme);
@@ -136,9 +144,19 @@ export default function (pi: ExtensionAPI) {
             container.invalidate();
           },
           handleInput(data: string) {
-            // With an empty filter there is nothing to edit, so let enter/esc
-            // fall through to the list. Otherwise they belong to the list too.
-            if (data === "\r" || data === "\n" || data === "\x1b") {
+            // SelectList resolves keys against the *global* keybinding manager,
+            // which does not include the user's keybindings.json overrides (the
+            // ctrl+p / ctrl+n remaps). Use the injected manager for selection
+            // movement, and delegate confirm/cancel to SelectList so escape,
+            // ctrl+c and enter keep their standard behavior.
+            if (kb.matches(data, "tui.select.up")) {
+              moveSelection(-1);
+            } else if (kb.matches(data, "tui.select.down")) {
+              moveSelection(1);
+            } else if (
+              kb.matches(data, "tui.select.confirm") ||
+              kb.matches(data, "tui.select.cancel")
+            ) {
               selectList?.handleInput(data);
             } else {
               const before = input.getValue();
