@@ -1,8 +1,8 @@
 {
   "lastChangelogVersion": "0.85.1",
-  "defaultProvider": "cerebras",
-  "defaultModel": "qwen-3.8-27b",
-  "defaultThinkingLevel": "medium",
+  "defaultProvider": "openrouter",
+  "defaultModel": "deepseek/deepseek-v4.1-flash",
+  "defaultThinkingLevel": "off",
   "packages": [
     "npm:@ifi/pi-plan@0.5.1",
     "npm:@eissar/pi-openrouter-session",
@@ -10,12 +10,10 @@
     "npm:@eggmasonvalue/pi-subagent"
   ],
   "enabledModels": [
-    "openrouter/inception/mercury-2.5-preview",
     "openrouter/xiaomi/mimo-v2.5-pro",
     "openai-codex/gpt-6-astra",
-    "antigravity/gemini-3.8-flash",
     "antigravity/gemini-3.7-flash",
-    "cerebras/qwen-3.8-27b"
+    "openrouter/deepseek/deepseek-v4.1-flash"
   ],
   "enableInstallTelemetry": false,
   "quietStartup": true,
