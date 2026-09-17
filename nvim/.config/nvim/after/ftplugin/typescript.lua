@@ -2,20 +2,8 @@
 -- https://github.com/sigmaSd/deno-nvim
 
 
-local function virtual_text_document_handler(fname, res, client)
-    if not res or not res.result then
-        return nil
-    end
-    local result = res.result
-
-    local bufnr = (function()
-        vim.cmd.vsplit()
-        vim.cmd.enew()
-        local bufnr = vim.api.nvim_get_current_buf()
-        vim.api.nvim_buf_set_name(bufnr, fname)
-        return bufnr
-    end)()
-
+-- Fill an existing buffer with the content of a deno virtual text document.
+local function fill_virtual_text_document(bufnr, fname, result, client)
     local lines
     local filetype
     if type(result) == 'table' then
@@ -23,7 +11,7 @@ local function virtual_text_document_handler(fname, res, client)
         filetype = 'json'
     else
         lines = vim.split(result, '\n')
-        filetype = 'markdown'
+        filetype = fname:sub(-3) == '.md' and 'markdown' or 'typescript'
     end
 
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
@@ -36,6 +24,46 @@ local function virtual_text_document_handler(fname, res, client)
     vim.api.nvim_buf_set_option(bufnr, 'modified', false)
     vim.api.nvim_buf_set_option(bufnr, 'readonly', true)
 end
+
+local function virtual_text_document_handler(fname, res, client)
+    if not res or not res.result then
+        return nil
+    end
+
+    local bufnr = (function()
+        vim.cmd.vsplit()
+        vim.cmd.enew()
+        local buf = vim.api.nvim_get_current_buf()
+        vim.api.nvim_buf_set_name(buf, fname)
+        return buf
+    end)()
+
+    fill_virtual_text_document(bufnr, fname, res.result, client)
+end
+
+-- Neovim no longer routes deno:/ URIs returned by textDocument/definition through
+-- client handlers, so a BufReadCmd is required to fetch the virtual document.
+-- https://github.com/neovim/neovim/issues/30908
+local deno_virtual_doc_group = vim.api.nvim_create_augroup('DenoVirtualTextDocument', { clear = true })
+vim.api.nvim_create_autocmd('BufReadCmd', {
+    group = deno_virtual_doc_group,
+    pattern = 'deno:/*',
+    callback = function(params)
+        local clients = vim.lsp.get_clients({ name = 'denols' })
+        if #clients == 0 then
+            return
+        end
+        local client = clients[1]
+        local uri = params.match
+        local res = client:request_sync('deno/virtualTextDocument', {
+            textDocument = { uri = uri },
+        }, 10000, params.buf)
+        if not res or type(res.result) ~= 'string' then
+            return
+        end
+        fill_virtual_text_document(params.buf, uri, res.result, client)
+    end,
+})
 
 vim.api.nvim_create_user_command('DenoStatus', function()
     for _, client in ipairs(vim.lsp.get_active_clients()) do
