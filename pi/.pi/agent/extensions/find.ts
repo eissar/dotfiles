@@ -26,7 +26,10 @@ interface Candidate {
   id: string;
   label: string;
   haystack: string;
-  isUser: boolean;
+  // Whether the transcript emits an OSC 133;A zone marker for this entry.
+  // That is what scrollToPrompt can navigate to, so ordinals are counted
+  // over marked entries only.
+  marked: boolean;
 }
 
 const MAX_ITEMS = 1000;
@@ -57,11 +60,21 @@ export default function (pi: ExtensionAPI) {
         const role = message?.role ?? "message";
         const preview = text.replace(/\s+/g, " ").trim().slice(0, PREVIEW);
 
+        // Mirror the transcript's marker rules:
+        //   user-message.js      -> always emits OSC 133;A
+        //   assistant-message.js -> emits it unless the message has tool calls
+        //                           (the render early-returns on hasToolCalls)
+        // Tool-calling assistant turns are therefore not addressable, which is
+        // intentional: it keeps a zone from spanning tool output.
+        const hasToolCalls = Array.isArray(message?.content) &&
+          message.content.some((b: any) => b?.type === "toolCall");
+        const marked = role === "user" || (role === "assistant" && !hasToolCalls);
+
         candidates.push({
           id: entry.id,
           label: `${role}: ${preview}`,
           haystack: `${role} ${text}`.toLowerCase(),
-          isUser: role === "user",
+          marked,
         });
 
         if (candidates.length >= MAX_ITEMS) break;
@@ -184,21 +197,20 @@ export default function (pi: ExtensionAPI) {
       // navigateTree would move the leaf and redraw the transcript for a new
       // branch, which is precisely what we are avoiding here.
       const target = candidates.find((c) => c.id === chosenId);
-      const isUser = target?.isUser ?? false;
 
-      // Ordinal among user messages: what scrollToPrompt can actually address.
-      const ordinal = candidates.filter((c) => c.isUser).findIndex((c) => c.id === chosenId);
+      // Ordinal among marker-emitting entries: what scrollToPrompt addresses.
+      const ordinal = candidates.filter((c) => c.marked).findIndex((c) => c.id === chosenId);
 
-      if (scrollToEntry(tuiRef, isUser, ordinal)) {
+      if (scrollToEntry(tuiRef, target?.marked ?? false, ordinal)) {
         ctx.ui.notify("Scrolled to match in transcript", "info");
         return;
       }
 
-      // No scroll happened: session state is untouched either way.
+      // No scroll happened, so session state is untouched either way.
       ctx.ui.notify(
-        isUser
+        target?.marked
           ? "Could not scroll (alt-screen TUI required). Transcript unchanged."
-          : "In-terminal jump only lands on user prompts. Transcript unchanged.",
+          : "This message has no zone marker (assistant replies with tool calls), so it cannot be targeted. Transcript unchanged.",
         "info",
       );
     },
@@ -206,12 +218,12 @@ export default function (pi: ExtensionAPI) {
 }
 
 /**
- * Scroll the transcript viewport to a user prompt by ordinal.
+ * Scroll the transcript viewport to a marker-emitting entry by ordinal.
  *
  * The alt-screen renderer exposes scrollToPrompt(direction), which scans the
- * rendered line buffer for OSC 133 prompt-start markers. Only user messages
- * emit those (components/user-message.js), so this can step between prompts but
- * cannot address an arbitrary entry by id.
+ * rendered line buffer for OSC 133;A zone starts. Both user messages and
+ * assistant replies without tool calls emit one, so `ordinal` must count over
+ * exactly that set of entries.
  *
  * scrollToPrompt steps relative to the current viewport position, so we go to
  * the top first and then step forward `ordinal` times.
@@ -219,9 +231,9 @@ export default function (pi: ExtensionAPI) {
  * scrollToPrompt is not part of the published TUI interface and does not exist
  * in regular (non-fullscreen) TUI mode, hence the feature detection.
  */
-function scrollToEntry(tui: any, isUser: boolean, ordinal: number): boolean {
+function scrollToEntry(tui: any, marked: boolean, ordinal: number): boolean {
   if (!tui || typeof tui.scrollToPrompt !== "function") return false;
-  if (!isUser || ordinal < 0) return false;
+  if (!marked || ordinal < 0) return false;
 
   try {
     if (typeof tui.scrollToTop === "function") tui.scrollToTop();
