@@ -1,0 +1,15 @@
+# Machine-local / secret files that must never be stowed over the target
+auth.json
+auth/
+trust.json
+models-store.json
+models-store.json.bak
+settings.json.bak
+run-history.jsonl
+sessions/
+missions/
+npm/
+node_modules/
+.pi-subagents/
+pi-subagent/
+*.log

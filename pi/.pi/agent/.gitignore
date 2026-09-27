@@ -1,6 +1,13 @@
 # Ignore secrets and transient files in dotfiles if any accidentally land here
 auth*.json
+auth/
 models-store.json
+settings.json.bak
+trust.json
+run-history.jsonl
+.pi-subagents/
+pi-subagent/
+
 trust.json
 run-history.jsonl
 sessions/
