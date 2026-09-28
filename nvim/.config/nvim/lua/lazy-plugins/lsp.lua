@@ -398,6 +398,18 @@ return {
                         luasnip.lsp_expand(args.body)
                     end,
                 },
+                formatting = {
+                    format = function(entry, item)
+                        if entry.source.name == 'luasnip' then
+                            local data = entry:get_completion_item().data
+                            local snip = data and luasnip.get_id_snippet(data.snip_id)
+                            if data and data.filetype == 'odin' and snip and snip.name == 'printf' then
+                                item.abbr = 'printf'
+                            end
+                        end
+                        return item
+                    end,
+                },
                 completion = { completeopt = 'menu,menuone,noinsert' },
                 view = { docs = { auto_open = true } }, -- https://github.com/hrsh7th/nvim-cmp/issues/1088
                 experimental = {

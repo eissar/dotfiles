@@ -1,6 +1,8 @@
 -- Import required modules
+local postfix = require('luasnip.extras.postfix').postfix
 -- local fmt = require('luasnip.extras.fmt').fmt
 local luasnip = require 'luasnip'
+local f = luasnip.function_node
 local snippet = luasnip.snippet
 local snippet_node = luasnip.snippet_node
 local txt = luasnip.text_node
@@ -272,6 +274,37 @@ do --#region Go
     end
 
     luasnip.add_snippets('go', go_snips)
+end --#endregion
+
+do --#region ODIN
+    local odin_snips = {}
+
+    do -- type `identifier.` then expand: prints identifier with its type and value
+        local ident = function(_, snip)
+            return snip.env.POSTFIX_MATCH
+        end
+        local snip = postfix({
+            trig = '.',
+            name = 'printf',
+            dscr = 'Print an Odin variable and its type',
+            match_pattern = '[%a_][%w_]*$',
+            show_condition = function(line)
+                return line:match('[%a_][%w_]*%.$') ~= nil
+            end,
+        }, {
+            txt 'fmt.printf("',
+            f(ident),
+            txt ' %T %v\\n", ',
+            f(ident),
+            txt ', ',
+            f(ident),
+            txt ')',
+            insert(0),
+        })
+        table.insert(odin_snips, snip)
+    end
+
+    luasnip.add_snippets('odin', odin_snips)
 end --#endregion
 
 --[[
