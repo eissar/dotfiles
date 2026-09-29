@@ -1,4 +1,4 @@
-alias bf='butterfish shell --model="@preset/sonar" --autosuggest-model="@preset/groq-kimi" -z 600000 -u "https://openrouter.ai/api/v1"'
+# alias bf='butterfish shell --model="@preset/sonar" --autosuggest-model="@preset/groq-kimi" -z 600000 -u "https://openrouter.ai/api/v1"'
 
 # alias ask='butterfish prompt --model="@preset/sonar" -z 600000'
 ask() {
@@ -44,3 +44,7 @@ alias vi="nvim"
 alias ssh="TERM=xterm-256color ssh"
 export PATH="$HOME/dbx-bin/:$PATH"
 alias scb='xclip -selection clipboard'
+
+# [if fdfind
+alias find='fdfind' # do this so respect .ignore
+alias fd='fdfind'
