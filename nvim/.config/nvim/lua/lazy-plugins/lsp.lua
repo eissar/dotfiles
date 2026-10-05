@@ -21,7 +21,6 @@ return {
     {
         'neovim/nvim-lspconfig',
         opts = {
-            inlay_hints = { enabled = true },
             codelens = {
                 enabled = true,
             },
@@ -107,6 +106,17 @@ return {
                 lineFoldingOnly = true,
             }
             capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
+
+            -- Enable inlay hints for servers that support them
+            vim.api.nvim_create_autocmd('LspAttach', {
+                group = vim.api.nvim_create_augroup('lsp-inlay-hints', { clear = true }),
+                callback = function(event)
+                    local client = vim.lsp.get_client_by_id(event.data.client_id)
+                    if client and client:supports_method('textDocument/inlayHint', event.buf) then
+                        vim.lsp.inlay_hint.enable(true, { bufnr = event.buf })
+                    end
+                end,
+            })
 
             -- .setup will auto download
             require('mason').setup()
