@@ -184,6 +184,15 @@ return {
 
             })
 
+            vim.lsp.config('ols', {
+                -- ols has no master switch; inlayHintProvider = OR of these flags
+                init_options = {
+                    -- enable_inlay_hints_params = true,
+                    enable_inlay_hints_default_params = true,
+                    -- enable_inlay_hints_implicit_return = true,
+                    -- enable_inlay_hints_optional_result = true,
+                },
+            })
             vim.lsp.enable('ols')
 
             require('lspconfig')
@@ -488,7 +497,7 @@ return {
                         group_index = 0,
                     },
                     { name = 'nvim_lsp' },
-                    { name = 'luasnip' },
+                    { name = 'luasnip', trigger_characters = { '.' } },
                     { name = 'path' },
                     { name = 'jupynium' },
                 },
