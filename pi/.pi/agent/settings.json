@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.85.1",
+  "lastChangelogVersion": "1.0.0",
   "defaultProvider": "fireworks",
   "defaultModel": "accounts/fireworks/models/glm-5p3-flash",
   "defaultThinkingLevel": "off",
@@ -7,17 +7,26 @@
     "npm:@ifi/pi-plan@0.5.1",
     "npm:@eissar/pi-openrouter-session",
     "npm:pi-antigravity",
-    "npm:@eggmasonvalue/pi-subagent"
+    "npm:@eggmasonvalue/pi-subagent",
+    "npm:@gotgenes/pi-anthropic-auth"
   ],
   "enabledModels": [
-    "openrouter/xiaomi/mimo-v2.5-pro",
     "openai-codex/gpt-6-astra",
     "antigravity/gemini-3.7-flash",
     "openrouter/deepseek/deepseek-v4.1-flash",
-    "fireworks/accounts/fireworks/models/glm-5p3-flash"
+    "fireworks/accounts/fireworks/models/glm-5p3-flash",
+    "openrouter/xiaomi/mimo-v2.6-pro",
+    "anthropic/claude-opus-5-5"
   ],
   "enableInstallTelemetry": false,
   "quietStartup": true,
   "theme": "dark",
-  "hideThinkingBlock": true
+  "hideThinkingBlock": false,
+  "warnings": {
+    "anthropicExtraUsage": false
+  },
+  "shellCommandPrefix": "find() { if command -v fdfind >/dev/null 2>&1; then command fdfind \"$@\"; else echo \"ERROR: No form or variation of find is permitted in this session. fdfind is not available on PATH. Use a different tool or approach. Agents: stop this command path, notify the user, and append a brief flagging comment to your response.\" >&2; return 127; fi; }",
+  "defaultTools": [
+    "-generate_image"
+  ]
 }
