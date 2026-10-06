@@ -1,4 +1,4 @@
-# alias bf='butterfish shell --model="@preset/sonar" --autosuggest-model="@preset/groq-kimi" -z 600000 -u "https://openrouter.ai/api/v1"'
+alias bf='butterfish shell --model="@preset/sonar" --autosuggest-model="@preset/groq-kimi" -z 600000 -u "https://openrouter.ai/api/v1"'
 
 # alias ask='butterfish prompt --model="@preset/sonar" -z 600000'
 ask() {
@@ -42,9 +42,20 @@ bind -x '"\C-x,": "$EDITOR ~/.bashrc"'
 
 alias vi="nvim"
 alias ssh="TERM=xterm-256color ssh"
-export PATH="$HOME/dbx-bin/:$PATH"
+export PATH="$HOME/.local/bin/:$HOME/.local/bin/scripts/:$PATH"
 alias scb='xclip -selection clipboard'
 
 # [if fdfind
 alias find='fdfind' # do this so respect .ignore
 alias fd='fdfind'
+bind 'set show-all-if-ambiguous on'
+bind 'set menu-complete-display-prefix on'
+bind 'set show-all-if-unmodified on'
+
+# Enable fzf key bindings and auto-completion
+if [ -f /usr/share/doc/fzf/examples/key-bindings.bash ]; then
+  source /usr/share/doc/fzf/examples/key-bindings.bash
+fi
+if [ -f /usr/share/doc/fzf/examples/completion.bash ]; then
+  source /usr/share/doc/fzf/examples/completion.bash
+fi
