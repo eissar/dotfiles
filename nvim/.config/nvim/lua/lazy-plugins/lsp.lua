@@ -170,7 +170,8 @@ return {
             vim.lsp.enable('pyright')
 
             vim.lsp.config('marksman', {
-                cmd = { nvim_data .. '/mason/bin/marksman.cmd', 'server' },
+                cmd = vim.fn.has('win32') == 1 and { nvim_data .. '/mason/bin/marksman.cmd', 'server' } or
+                    { nvim_data .. '/mason/bin/marksman', 'server' },
                 filetypes = { 'markdown', 'markdown.mdx' },
                 -- settings = {
                 -- root_dir = require('lspconfig.util').root_pattern('.marksman.toml'),
