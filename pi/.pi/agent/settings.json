@@ -27,6 +27,7 @@
   },
   "shellCommandPrefix": "find() { if command -v fdfind >/dev/null 2>&1; then command fdfind \"$@\"; else echo \"ERROR: No form or variation of find is permitted in this session. fdfind is not available on PATH. Use a different tool or approach. Agents: stop this command path, notify the user, and append a brief flagging comment to your response.\" >&2; return 127; fi; }",
   "defaultTools": [
-    "-generate_image"
+    "-generate_image",
+    "+codemode"
   ]
 }
