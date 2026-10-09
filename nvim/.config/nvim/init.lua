@@ -245,6 +245,7 @@ require('lazy').setup({
                 'luadoc',
                 'markdown',
                 'markdown_inline',
+                'odin',
                 'query',
                 'vim',
                 'vimdoc',
