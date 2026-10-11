@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# duckdb: we can get result sets as html using .mode html
+# with .headers on, we are able to
+# in the below example, we use perl to split
+# the result sets and output valid html
+set -o pipefail
+
+if [[ $# -ne 1 ]]; then
+    printf 'Usage: %s <sql-file>\n' "$0" >&2
+    exit 1
+fi
+
+echo '<!doctype html><html><head><meta charset="utf-8"></head><body>'
+
+duckdb -bail -cmd '.mode html' -cmd '.headers on' \
+    < "$1" |
+    perl -pe '
+        if (/^<tr><th>/) {
+            $_ = ($seen++ ? "</table>\n<table>\n" : "<table>\n") . $_;
+        }
+        END { print "</table>\n" if $seen }
+    '
+
+echo '</body></html>'
+
