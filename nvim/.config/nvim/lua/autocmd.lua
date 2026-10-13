@@ -99,3 +99,36 @@ vim.api.nvim_create_autocmd({ 'CursorHold', 'InsertLeave' }, {
         vim.lsp.codelens.refresh()
     end,
 })
+
+-- hide inlay hints on the cursor line (shown again when the cursor leaves)
+do
+    local _ = vim.lsp.inlay_hint -- load the built-in provider first so ours runs after it
+    local hint_ns = vim.api.nvim_create_namespace('nvim.lsp.inlayhint')
+    local saved = {} -- { buf, row, items = { id, col, text }[] }
+
+    vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace('user.inlayhint_hide'), {
+        on_win = function(_, win, buf)
+            if win ~= vim.api.nvim_get_current_win() then return end
+            local row = vim.api.nvim_win_get_cursor(win)[1] - 1
+            if saved.buf ~= buf or saved.row ~= row then
+                for _, m in ipairs(saved.items or {}) do
+                    -- skip marks the built-in already deleted (e.g. after an edit) to avoid duplicates
+                    local pos = vim.api.nvim_buf_is_valid(saved.buf)
+                        and vim.api.nvim_buf_get_extmark_by_id(saved.buf, hint_ns, m.id, {}) or {}
+                    if pos[1] then
+                        pcall(vim.api.nvim_buf_set_extmark, saved.buf, hint_ns, pos[1], pos[2],
+                            { id = m.id, virt_text = m.text, virt_text_pos = 'inline' })
+                    end
+                end
+                saved = { buf = buf, row = row, items = {} }
+            end
+            -- re-checked every redraw so hints that arrive/refresh while on this line are hidden too
+            for _, m in ipairs(vim.api.nvim_buf_get_extmarks(buf, hint_ns, { row, 0 }, { row, -1 }, { details = true })) do
+                if m[4].virt_text then
+                    table.insert(saved.items, { id = m[1], col = m[3], text = m[4].virt_text })
+                    pcall(vim.api.nvim_buf_set_extmark, buf, hint_ns, row, m[3], { id = m[1] })
+                end
+            end
+        end,
+    })
+end
