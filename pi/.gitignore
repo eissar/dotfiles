@@ -1,0 +1,21 @@
+# Default: ignore everything under pi/. Whitelist only what should be tracked.
+*
+
+# Descend into directories so whitelisted files below them are reachable
+!*/
+
+# Top-level docs and config
+!/.gitignore
+!/README.md
+!/TODO.md
+!/.stow-local-ignore
+
+# Whitelisted pi agent config
+!.pi/agent/glossary.json
+!.pi/agent/keybindings.json
+!.pi/agent/models.json
+!.pi/agent/settings.json
+!.pi/agent/agents/**
+!.pi/agent/extensions/**
+!.pi/agent/tests/**
+!.pi/agent/themes/**
