@@ -4,6 +4,7 @@ return {
         'williamboman/mason.nvim',
         'jay-babu/mason-nvim-dap.nvim',
         'leoluz/nvim-dap-go',
+        'theHamsta/nvim-dap-virtual-text',
     },
     keys = function(_, keys)
         local dap = require 'dap'
@@ -19,6 +20,8 @@ return {
     end,
     config = function()
         local dap = require 'dap'
+
+        require('nvim-dap-virtual-text').setup {}
 
         require('mason-nvim-dap').setup {
             automatic_installation = true,
@@ -62,6 +65,25 @@ return {
 
         require('dap-go').setup {
             delve = { detached = vim.fn.has 'win32' == 0 },
+        }
+
+        dap.adapters.lldb = {
+            type = 'executable',
+            command = 'lldb-dap',
+            name = 'lldb',
+        }
+
+        dap.configurations.odin = {
+            {
+                name = 'Launch (Odin, -debug build)',
+                type = 'lldb',
+                request = 'launch',
+                program = function()
+                    return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+                end,
+                cwd = '${workspaceFolder}',
+                stopOnEntry = false,
+            },
         }
     end,
 }
