@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "1.0.0",
+  "lastChangelogVersion": "1.0.4",
   "defaultProvider": "fireworks",
   "defaultModel": "accounts/fireworks/models/glm-5p3-flash",
   "defaultThinkingLevel": "off",
@@ -11,17 +11,15 @@
     "npm:@gotgenes/pi-anthropic-auth"
   ],
   "enabledModels": [
-    "openai-codex/gpt-6-astra",
-    "antigravity/gemini-3.7-flash",
-    "openrouter/deepseek/deepseek-v4.1-flash",
-    "fireworks/accounts/fireworks/models/glm-5p3-flash",
-    "openrouter/xiaomi/mimo-v2.6-pro",
-    "anthropic/claude-opus-5-5"
+    "openai/gpt-6.1-sol",
+    "anthropic/claude-haiku-5-5",
+    "antigravity/gemini-3.8-flash"
   ],
   "enableInstallTelemetry": false,
   "quietStartup": true,
-  "theme": "dark",
-  "hideThinkingBlock": false,
+  "showHardwareCursor": true,
+  "theme": "nightfox",
+  "hideThinkingBlock": true,
   "warnings": {
     "anthropicExtraUsage": false
   },
@@ -29,5 +27,6 @@
   "defaultTools": [
     "-generate_image",
     "+codemode"
-  ]
+  ],
+  "deviceId": "bb0f2a4a-9377-4481-a245-e83399c2cdb7"
 }
