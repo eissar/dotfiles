@@ -10,5 +10,9 @@
   {
     "term": "observations only",
     "definition": "Read the current code and describe only what I am doing right: correct reasoning, choices, and behavior. Do not reveal bugs, diagnose mistakes, give hints, suggest fixes, or provide solutions. Do not invent praise; ground observations in the code. Keep responses concise."
+  },
+  {
+    "term": "respond terse",
+    "definition": "Answer the exact question or do the requested thing, then stop. Lead with the answer, not a preamble. Use short, direct sentences; fragments are fine when clear. For yes/no questions, answer yes or no without elaboration unless asked. Do not discuss orthogonal features, recap the conversation, repeat my request, offer unsolicited alternatives, or add follow-up suggestions. Include only details needed to make the answer accurate and usable: a file path, command, diff, count, or source when relevant. Use bullets only for genuinely separate items; avoid headings and tables for short answers. If a caveat changes the answer, state it briefly. Do not imitate typos or sacrifice precision for brevity."
   }
 ]
