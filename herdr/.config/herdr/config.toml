@@ -1,0 +1,35 @@
+onboarding = false
+# herdr configuration
+# Place this file at ~/.config/herdr/config.toml
+
+[keys]
+# Pane focus: keep the default prefix+h/j/k/l and also accept prefix+ctrl+h/j/k/l.
+focus_pane_left = ["prefix+h", "prefix+ctrl+h"]
+focus_pane_down = ["prefix+j", "prefix+ctrl+j"]
+focus_pane_up = ["prefix+k", "prefix+ctrl+k"]
+focus_pane_right = ["prefix+l", "prefix+ctrl+l"]
+
+[theme]
+name = "terminal"
+
+# Nightfox palette (EdenEast/nightfox.nvim, extra/nightfox/alacritty.toml)
+[theme.custom]
+accent = "#719cd6"
+panel_bg = "#192330"
+sidebar_bg = "#192330"
+active_row_bg = "#29394f"
+selection_bg = "#2b3b51"
+surface0 = "#212e3f"
+surface1 = "#29394f"
+surface_dim = "#131a24"
+overlay0 = "#39506d"
+overlay1 = "#71839b"
+text = "#cdcecf"
+subtext0 = "#aeafb0"
+mauve = "#9d79d6"
+green = "#81b29a"
+yellow = "#dbc074"
+red = "#c94f6d"
+blue = "#719cd6"
+teal = "#63cdcf"
+peach = "#f4a261"
