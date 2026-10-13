@@ -1,4 +1,4 @@
-alias bf='butterfish shell --model="@preset/sonar" --autosuggest-model="@preset/groq-kimi" -z 600000 -u "https://openrouter.ai/api/v1"'
+# alias bf='butterfish shell --model="@preset/sonar" --autosuggest-model="@preset/groq-kimi" -z 600000 -u "https://openrouter.ai/api/v1"'
 
 # alias ask='butterfish prompt --model="@preset/sonar" -z 600000'
 ask() {
