@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+function blerc/line-has-syntax-error {
+  local i n=${#_ble_edit_str} a
+
+  for ((i = 0; i < n; i++)); do
+    a=${_ble_syntax_attr[i]-}
+    [[ $a == "$ATTR_ERR" ]] && return 0
+  done
+
+  return 1
+}
+
+function blerc/disable-auto-complete-on-syntax-error {
+  ble/function#advice around ble/complete/auto-complete.impl '
+    blerc/line-has-syntax-error && return 1
+    ble/function#advice/do
+  '
+}
+
+blehook/eval-after-load complete blerc/disable-auto-complete-on-syntax-error
+
+ble-face -r region
+
+ble-bind -m auto_complete -f 'M-a' auto_complete/insert
+ble-bind -m auto_complete -f 'M-l' 'auto_complete/@end insert-word'
+
+ble-face auto_complete='fg=238,underline=0'
+ble-face command_directory='fg=33,underline=0'
+bleopt highlight_filename=
+
+ble-import core-complete -C '
+  bleopt complete_menu_complete_opts=
+  ble-bind -f TAB menu-complete
+  ble-bind -f C-i menu-complete
+'
+
+ble-bind -f 'M-/' 'dabbrev-expand'
+ble-bind -m 'dabbrev' -f 'M-/' 'dabbrev/next'
+ble-bind -m 'dabbrev' -f 'M-/' 'dabbrev/prev'
+ble-bind -m 'dabbrev' -f 'M-?' 'dabbrev/prev'
+
+
