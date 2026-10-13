@@ -1,34 +1,3 @@
-# Alacritty - TOML configuration file format.
-
-# DESCRIPTION 
-# An example configuration file for Alacritty preconfigured with default values.
-
-# SYNTAX
-# Alacritty's configuration file uses the TOML format. 
-# The format's specification can be found at https://toml.io/en/v1.0.0.
-
-# GENERAL
-
-# import = ["<string>",]
-
-# Import additional configuration files.
-# Imports are loaded in order, skipping all missing files, with the importing file being loaded last. If a field is already present in a previous import, it will be replaced.
-# All imports must either be absolute paths starting with /, or paths relative to the user's home directory starting with ~/.
-
-# Example:
-
-# import = [
-# "~/.config/alacritty/base16-dark.toml",
-# "~/.config/alacritty/keybindings.toml",
-# ]
-
-import = []
-
-# live_config_reload = true | false
-# Live config reload (changes require restart)
-# Default: true
-
-live_config_reload = true
 
 # ipc_socket = true | false # (unix only)
 # Offer IPC using alacritty msg
@@ -55,9 +24,9 @@ live_config_reload = true
 # program = "/bin/zsh"
 # args = ["-l"]
 
-[shell]
-program = '/Program Files/PowerShell/7/pwsh.exe'
-args = [" -WorkingDirectory ~ "]
+# [terminal.shell]
+# program = 'pwsh.exe'
+# args = [" -WorkingDirectory ~ "]
 
 
 # ENV
@@ -230,10 +199,10 @@ multiplier = 3
 # When true, Alacritty will use a custom built-in font for box drawing characters (Unicode points U+2500 - U+259F) and powerline symbols (Unicode points U+E0B0 - U+E0B3).
 # Default: true
 
-[font]
-normal = { family = "MesloLGS NF" }
-size = 12
-builtin_box_drawing = true 
+# [font]
+# normal = { family = "MesloLGS NF" }
+# size = 12
+# builtin_box_drawing = true 
 
 # COLORS
 # This section documents the [colors] table of the configuration file.
@@ -495,6 +464,41 @@ thickness = 0.15
 
 [mouse]
 hide_when_typing = false
+
+[general]
+
+# live_config_reload = true | false
+# Live config reload (changes require restart)
+# Default: true
+
+live_config_reload = true
+# Alacritty - TOML configuration file format.
+
+# DESCRIPTION 
+# An example configuration file for Alacritty preconfigured with default values.
+
+# SYNTAX
+# Alacritty's configuration file uses the TOML format. 
+# The format's specification can be found at https://toml.io/en/v1.0.0.
+
+# GENERAL
+
+# import = ["<string>",]
+
+# Import additional configuration files.
+# Imports are loaded in order, skipping all missing files, with the importing file being loaded last. If a field is already present in a previous import, it will be replaced.
+# All imports must either be absolute paths starting with /, or paths relative to the user's home directory starting with ~/.
+
+# Example:
+
+# import = [
+# "~/.config/alacritty/base16-dark.toml",
+# "~/.config/alacritty/keybindings.toml",
+# ]
+
+import = []
+
+[terminal]
 
 
 # HINTS
