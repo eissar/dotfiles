@@ -496,7 +496,7 @@ live_config_reload = true
 # "~/.config/alacritty/keybindings.toml",
 # ]
 
-import = []
+import = ["nightfox.toml"]
 
 [terminal]
 
