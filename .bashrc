@@ -59,3 +59,12 @@ fi
 if [ -f /usr/share/doc/fzf/examples/completion.bash ]; then
   source /usr/share/doc/fzf/examples/completion.bash
 fi
+
+
+alias npm='pnpm'
+alias npx='pnpm dlx'
+
+if [ "$(id -un)" != "piagent" ]; then
+    alias pi='sudo -H -u piagent /home/piagent/.local/share/pnpm/bin/pi'
+fi
+
