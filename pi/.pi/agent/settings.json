@@ -13,13 +13,14 @@
   "enabledModels": [
     "openai/gpt-6.1-sol",
     "anthropic/claude-haiku-5-5",
-    "antigravity/gemini-3.8-flash"
+    "antigravity/gemini-3.8-flash",
+    "anthropic/claude-sonnet-5-5"
   ],
   "enableInstallTelemetry": false,
   "quietStartup": true,
   "showHardwareCursor": true,
   "theme": "nightfox",
-  "hideThinkingBlock": true,
+  "hideThinkingBlock": false,
   "warnings": {
     "anthropicExtraUsage": false
   },
