@@ -65,6 +65,6 @@ alias npm='pnpm'
 alias npx='pnpm dlx'
 
 if [ "$(id -un)" != "piagent" ]; then
-    alias pi='sudo -H -u piagent /home/piagent/.local/share/pnpm/bin/pi'
+    alias pi='sudo -H -u piagent bash -c '\''source ~/.nvm/nvm.sh && nvm use --silent 24 && exec ~/.local/share/pnpm/bin/pi "$@"'\'' bash'
 fi
 
