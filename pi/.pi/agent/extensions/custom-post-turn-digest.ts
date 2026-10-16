@@ -8,7 +8,7 @@
  *     (OpenRouter sends `provider` on every SSE chunk; no extra requests).
  */
 
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent/compat";
 import { openAICompletionsApi } from "@earendil-works/pi-ai";
 import { Box, Text } from "@earendil-works/pi-tui";
 import { readFile } from "node:fs/promises";
