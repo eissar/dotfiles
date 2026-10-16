@@ -1,5 +1,21 @@
 # Pi configuration notes
 
+## Require the piagent OS user
+
+`pi/.pi/agent/extensions/require-piagent.ts` exits with status 1 during
+extension initialization unless the OS username is `piagent`. It checks
+`os.userInfo()`, not environment variables such as `$USER`.
+
+Launch Pi with `sudo -u piagent -H pi`. The executable must be accessible
+to `piagent`, which uses its own home directory and Pi configuration.
+Install this extension in the normal user's Pi configuration to block
+accidental launches there; it can also be installed for `piagent`.
+
+This is an accident-prevention guard, not a security boundary. Disabling
+extensions, changing `PI_CODING_AGENT_DIR`, or removing the extension bypasses
+it. Use OS permissions for actual isolation. Logging in directly as
+`piagent` also passes; using sudo specifically is not required.
+
 ## Hardware cursor: compatibility with Herdr copy mode
 
 `pi/.pi/agent/settings.json` sets `"showHardwareCursor": true` so Herdr can
