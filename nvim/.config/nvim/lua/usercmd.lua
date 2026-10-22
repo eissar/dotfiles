@@ -239,21 +239,23 @@ vim.api.nvim_create_user_command('DiffSinceSaved', show_diff_since_last_saved, {
 
 vim.api.nvim_create_user_command('ScreenshotMode', function()
     if vim.opt.number:get() == true then
-        -- Turn OFF 'number' and 'list' (Enter screenshot mode)
+        -- Hide numbers, whitespace, and signs (enter screenshot mode)
         vim.opt.relativenumber = false
         vim.opt.number = false
         vim.opt.list = false
+        vim.opt.signcolumn = 'no'
         vim.notify('Screenshot Mode: ON', vim.log.levels.INFO)
         vim.opt.foldenable = false
     else
         vim.opt.relativenumber = true
         vim.opt.number = true
         vim.opt.list = true
+        vim.opt.signcolumn = 'yes'
         vim.opt.foldenable = true
         vim.notify('Screenshot Mode: OFF', vim.log.levels.INFO)
     end
 end, {
-    desc = 'Toggle screenshot mode (no numbers, no whitespace)'
+    desc = 'Toggle screenshot mode (no numbers, no whitespace, no signs)'
 })
 
 vim.api.nvim_create_user_command('Gbrowse', 'GBrowse', {})
