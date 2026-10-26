@@ -190,8 +190,8 @@ return {
                 init_options = {
                     -- enable_inlay_hints_params = true,
                     enable_inlay_hints_default_params = true,
-                    -- enable_inlay_hints_implicit_return = true,
-                    -- enable_inlay_hints_optional_result = true,
+                    enable_inlay_hints_implicit_return = true,
+                    enable_inlay_hints_optional_result = true,
                 },
             })
             vim.lsp.enable('ols')
