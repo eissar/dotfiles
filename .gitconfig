@@ -32,5 +32,3 @@
 
 [web]
     browser= man_hack
-[safe]
-	directory = /srv/code/booru
