@@ -32,7 +32,7 @@ export default function (pi: ExtensionAPI) {
         const updated = [...lines];
         const line = updated[cursorLine] ?? "";
         const start = cursorCol - prefix.length;
-        const insertion = `${item.value} `;
+        const insertion = `${item.value.replace(/^@@/, "")} `;
         updated[cursorLine] = line.slice(0, start) + insertion + line.slice(cursorCol);
         return { lines: updated, cursorLine, cursorCol: start + insertion.length };
       },
