@@ -515,4 +515,42 @@ vim.keymap.set('n', '<leader>B', function() require('gitsigns').blame_line() end
 --
 -- map commands in lua/lazy-plugins/lsp.lua
 --
+-- Pick from unstaged tracked files (git diff); <CR> opens file, <C-d> opens fugitive diff
+vim.keymap.set('n', '<leader>P', function()
+    local root = vim.trim(vim.fn.system('git rev-parse --show-toplevel'))
+    if vim.v.shell_error ~= 0 then
+        return vim.notify('Not in a git repo', vim.log.levels.WARN)
+    end
+    local files = vim.fn.systemlist({ 'git', '-C', root, 'diff', '--name-only' })
+    if #files == 0 then
+        return vim.notify('No unstaged tracked files', vim.log.levels.INFO)
+    end
+    local actions = require('telescope.actions')
+    local state = require('telescope.actions.state')
+    require('telescope.pickers').new({}, {
+        prompt_title = 'Unstaged Files',
+        finder = require('telescope.finders').new_table({ results = files }),
+        sorter = require('telescope.config').values.generic_sorter({}),
+        previewer = require('telescope.previewers').new_termopen_previewer({
+            get_command = function(entry)
+                return { 'git', '-C', root, 'diff', '--', entry.value }
+            end,
+        }),
+        attach_mappings = function(bufnr, map)
+            local function open(diff)
+                return function()
+                    local sel = state.get_selected_entry()
+                    actions.close(bufnr)
+                    if not sel then return end
+                    vim.cmd.edit(vim.fn.fnameescape(root .. '/' .. sel.value))
+                    if diff then vim.cmd('Gvdiffsplit') end -- vim-fugitive
+                end
+            end
+            actions.select_default:replace(open(false))
+            map({ 'i', 'n' }, '<C-d>', open(true))
+            return true
+        end,
+    }):find()
+end, { desc = '[P]ick unstaged git files (fugitive)' })
+
 return M
