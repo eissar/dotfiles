@@ -1,0 +1,148 @@
+# ~/.config/sxhkd/sxhkdrc  (XFCE / Xfwm4 / X11)
+#
+# Super+i, then: h = left half, j = bottom half, k = top half, l = right half, m = maximize toggle
+# Not yet snapped to that half -> unmaximize and snap.
+# Already snapped -> focus another window in that half (repeated presses cycle through them).
+# Already snapped and no other window there -> move to the same half of the adjacent monitor
+# in that direction (nothing happens if there is no monitor that way).
+#
+# The logic lives at the bottom of THIS file on lines starting with "#@". sxhkd ignores them as comments;
+# each binding strips the prefix with sed and pipes the result to sh. One file, no helper script,
+# and every binding stays short (no brace expansion, no long inline commands to overflow sxhkd's buffer).
+# Needs: wmctrl, xprop, xwininfo, xdpyinfo (x11-utils), xrandr (fallback only).
+# If you start sxhkd with -c, change the path below to match.
+
+super + i ; h
+	sed -n 's/^#@//p' "$HOME/.config/sxhkd/sxhkdrc" | sh -s left
+
+super + i ; j
+	sed -n 's/^#@//p' "$HOME/.config/sxhkd/sxhkdrc" | sh -s bottom
+
+super + i ; k
+	sed -n 's/^#@//p' "$HOME/.config/sxhkd/sxhkdrc" | sh -s top
+
+super + i ; l
+	sed -n 's/^#@//p' "$HOME/.config/sxhkd/sxhkdrc" | sh -s right
+
+super + i ; m
+	sed -n 's/^#@//p' "$HOME/.config/sxhkd/sxhkdrc" | sh -s max
+
+# Alt+[ / Alt+] = previous / next media track (Windows OEM_4 / OEM_6)
+alt + bracketleft
+	xdotool key --clearmodifiers XF86AudioPrev
+
+alt + bracketright
+	xdotool key --clearmodifiers XF86AudioNext
+
+# ---------------- embedded logic (POSIX sh) ----------------
+#@ dir=$1; tol=24
+#@ prop() { xprop "$@" 2>/dev/null | sed -n 's/^[^=]*= //p' | tr -d ','; }
+#@ wid() { xprop "$@" 2>/dev/null | grep -o '0x[0-9a-fA-F]*'; }
+#@ ext() { e=$(prop -id "$1" _NET_FRAME_EXTENTS); echo ${e:-0 0 0 0}; }
+#@ frame() {
+#@   set -- $(xwininfo -id "$1" 2>/dev/null | awk '
+#@     /Absolute upper-left X/ {x=$NF}  /Absolute upper-left Y/ {y=$NF}
+#@     /Width:/ {w=$NF}  /Height:/ {h=$NF}  END {print x+0, y+0, w+0, h+0}') $(ext "$1")
+#@   echo $(($1-$5)) $(($2-$7)) $(($3+$5+$6)) $(($4+$7+$8))
+#@ }
+#@ near() { n=$(($1-$2)); [ ${n#-} -le $tol ]; }
+#@
+#@ win=$(wid -root _NET_ACTIVE_WINDOW | head -n 1)
+#@ [ -n "$win" ] && [ $(($win)) -ne 0 ] || exit 0
+#@
+#@ if [ "$dir" = max ]; then
+#@   case $(xprop -id "$win" _NET_WM_STATE) in
+#@     *MAXIMIZED_VERT*MAXIMIZED_HORZ*|*MAXIMIZED_HORZ*MAXIMIZED_VERT*) op=remove ;;
+#@     *) op=add ;;
+#@   esac
+#@   wmctrl -ir "$win" -b $op,maximized_vert,maximized_horz
+#@   exit 0
+#@ fi
+#@
+#@ # outer frame of the active window
+#@ set -- $(frame "$win"); fx=$1 fy=$2 fw=$3 fh=$4
+#@
+#@ # work area of the current desktop (excludes panels)
+#@ desk=$(prop -root _NET_CURRENT_DESKTOP); desk=${desk:-0}
+#@ set -- $(prop -root _NET_WORKAREA)
+#@ [ $# -ge $((desk*4+4)) ] && shift $((desk*4))
+#@ wx=${1:-0} wy=${2:-0} ww=${3:-0} wh=${4:-0}
+#@
+#@ # all monitors as "x y w h" lines (Xinerama is fast; xrandr probes every output, ~170ms)
+#@ mons=$(xdpyinfo -ext XINERAMA 2>/dev/null | awk '$1 == "head" { split($3, a, "x"); split($5, b, ","); print b[1], b[2], a[1], a[2] }')
+#@ [ -n "$mons" ] || mons=$(xrandr --listactivemonitors 2>/dev/null | awk 'NR > 1 { split($3, a, /[\/x+]/); print a[5], a[6], a[1], a[3] }')
+#@ [ -n "$mons" ] || mons="$wx $wy $ww $wh"
+#@ px=$((fx+fw/2)) py=$((fy+fh/2))
+#@
+#@ # target half of monitor "$1 $2 $3 $4", clipped to the work area; sets tx ty tw th
+#@ target() {
+#@   mx=$1 my=$2 mw=$3 mh=$4
+#@   x0=$mx y0=$my x1=$((mx+mw)) y1=$((my+mh))
+#@   if [ "$ww" -gt 0 ] && [ "$wh" -gt 0 ]; then
+#@     [ $wx -gt $x0 ] && x0=$wx
+#@     [ $wy -gt $y0 ] && y0=$wy
+#@     [ $((wx+ww)) -lt $x1 ] && x1=$((wx+ww))
+#@     [ $((wy+wh)) -lt $y1 ] && y1=$((wy+wh))
+#@   fi
+#@   W=$((x1-x0)) H=$((y1-y0))
+#@   if [ $W -le 0 ] || [ $H -le 0 ]; then x0=$mx y0=$my W=$mw H=$mh; fi
+#@   case $dir in
+#@     left)   tx=$x0         ty=$y0         tw=$((W/2))   th=$H ;;
+#@     right)  tx=$((x0+W/2)) ty=$y0         tw=$((W-W/2)) th=$H ;;
+#@     top)    tx=$x0         ty=$y0         tw=$W         th=$((H/2)) ;;
+#@     bottom) tx=$x0         ty=$((y0+H/2)) tw=$W         th=$((H-H/2)) ;;
+#@     *) exit 1 ;;
+#@   esac
+#@ }
+#@
+#@ # monitor containing the window's centre (first monitor if none does)
+#@ cur=$(echo "$mons" | awk -v px=$px -v py=$py '
+#@   { if (!n++) d = $0
+#@     if (px >= $1 && px < $1+$3 && py >= $2 && py < $2+$4) { print; hit=1; exit } }
+#@   END { if (!hit && n) print d }')
+#@ target $cur
+#@
+#@ # already snapped there -> focus another window whose centre lies in that half
+#@ if near $fx $tx && near $fy $ty && near $((fx+fw)) $((tx+tw)) && near $((fy+fh)) $((ty+th)); then
+#@   for w in $(wid -root _NET_CLIENT_LIST_STACKING); do
+#@     [ $(($w)) -eq $(($win)) ] && continue
+#@     wd=$(prop -id "$w" _NET_WM_DESKTOP)
+#@     [ "$wd" = "$desk" ] || [ "$wd" = 4294967295 ] || continue
+#@     case $(xprop -id "$w" _NET_WM_STATE _NET_WM_WINDOW_TYPE) in
+#@       *HIDDEN*|*TYPE_DESKTOP*|*TYPE_DOCK*) continue ;;
+#@     esac
+#@     set -- $(frame "$w"); cx=$(($1+$3/2)) cy=$(($2+$4/2))
+#@     if [ $cx -ge $tx ] && [ $cx -lt $((tx+tw)) ] && [ $cy -ge $ty ] && [ $cy -lt $((ty+th)) ]; then
+#@       wmctrl -ia "$w"
+#@       exit 0
+#@     fi
+#@   done
+#@   # nothing to focus -> move to the same half of the adjacent monitor in that direction
+#@   set -- $cur
+#@   nb=$(echo "$mons" | awk -v d=$dir -v cx=$1 -v cy=$2 -v cw=$3 -v ch=$4 '
+#@     BEGIN { best = -1 }
+#@     { ok = 0
+#@       if (d == "left" || d == "right") {
+#@         if ($2 < cy+ch && $2+$4 > cy) { dist = (d == "left") ? cx-$1 : $1-cx; ok = (dist > 0) }
+#@       } else {
+#@         if ($1 < cx+cw && $1+$3 > cx) { dist = (d == "top") ? cy-$2 : $2-cy; ok = (dist > 0) }
+#@       }
+#@       if (ok && (best < 0 || dist < best)) { best = dist; r = $0 } }
+#@     END { if (best >= 0) print r }')
+#@   [ -n "$nb" ] || exit 0
+#@   target $nb
+#@ fi
+#@
+#@ # otherwise -> unmaximize and snap (gravity 1 = NorthWest: x,y are the frame's corner)
+#@ case $(xprop -id "$win" _NET_WM_STATE) in
+#@   *MAXIMIZED*|*FULLSCREEN*)
+#@     wmctrl -ir "$win" -b remove,maximized_vert,maximized_horz
+#@     wmctrl -ir "$win" -b remove,fullscreen
+#@     i=0
+#@     while [ $i -lt 20 ]; do
+#@       case $(xprop -id "$win" _NET_WM_STATE) in *MAXIMIZED*|*FULLSCREEN*) ;; *) break ;; esac
+#@       sleep 0.005; i=$((i+1))
+#@     done ;;
+#@ esac
+#@ set -- $(ext "$win")
+#@ wmctrl -ir "$win" -e 1,$tx,$ty,$((tw-$1-$2)),$((th-$3-$4))
