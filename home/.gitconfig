@@ -32,3 +32,10 @@
 
 [web]
     browser= man_hack
+
+# pi writes machine-local state into its settings.json; strip it so the dotfiles copy stays shareable.
+# Applied via the dotfiles repo's .gitattributes. https://github.com/earendil-works/pi/issues/10187
+[filter "pi-settings"]
+    clean = "jq 'del(.deviceId, .lastChangelogVersion)'"
+    # Fail instead of committing unfiltered content if jq is missing
+    required = true
