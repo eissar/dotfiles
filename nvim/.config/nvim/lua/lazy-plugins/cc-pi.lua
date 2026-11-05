@@ -12,6 +12,9 @@ return {
         'nvim-treesitter/nvim-treesitter',
     },
     cmd = 'CodeCompanion',
+    config = function(_, opts)
+        require('codecompanion').setup(opts)
+    end,
     keys = {
         { '<leader>cc', '<cmd>CodeCompanion<cr>', mode = { 'n', 'v' }, desc = 'CodeCompanion inline' },
     },
