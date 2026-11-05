@@ -329,6 +329,40 @@ require('lazy').setup({
     },
     -- interactive repl for configured languages
     { 'Vigemus/iron.nvim' },
+    -- inline AI editing driven by the Pi coding agent
+    {
+        'eissar/cc-pi.nvim',
+        -- private repo: lazy must clone over SSH, not https
+        url = 'git@github.com:eissar/cc-pi.nvim.git',
+        dependencies = {
+            'nvim-lua/plenary.nvim',
+            'nvim-treesitter/nvim-treesitter',
+        },
+        cmd = 'CodeCompanion',
+        config = function(_, opts)
+            require('codecompanion').setup(opts)
+        end,
+        keys = {
+            { '<leader>cc', '<cmd>CodeCompanion<cr>', mode = { 'n', 'v' }, desc = 'CodeCompanion inline' },
+        },
+        opts = {
+            adapters = {
+                pi = {
+                    pi = {
+                        defaults = {
+                            model = 'deepseek/deepseek-v4.1-flash-1017',
+                            provider = 'openrouter',
+                            -- --no-skills/--no-extensions/--no-mcp/--no-context-files
+                            -- for fast, tool-free inline edits
+                            isolated = true,
+                            timeout = 120000,
+                        },
+                    },
+                },
+            },
+            display = { diff = { provider = 'inline', enabled = true } },
+        },
+    },
     {                            -- automatically add plugins, configuration, etc from `lua/lazy-plugins/*.lua`
         import = 'lazy-plugins', -- './lua/lazy-plugins/'
     },
