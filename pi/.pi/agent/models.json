@@ -48,7 +48,8 @@
             }
           }
         }
-      ]
+      ],
+      "api": "openai-completions"
     },
     "cerebras": {
       "models": [
@@ -82,7 +83,8 @@
             "max": null
           }
         }
-      ]
+      ],
+      "api": "openai-completions"
     },
     "openrouter": {
       "compat": {

@@ -1,5 +1,42 @@
 # Pi configuration notes
 
+## Subagents: model and tool selection
+
+The extension at `pi/.pi/agent/extensions/subagent.ts` defaults fresh
+children to `anthropic/claude-haiku-5-5` with `tools: ["read"]`.
+Explicit model overrides must be exact registered provider/model IDs.
+There is no fallback if the selected model is unavailable.
+
+For implementation tasks, grant tools explicitly:
+
+```json
+{
+  "task": "Implement and test the assigned module. Modify only /srv/code/project/wire.",
+  "cwd": "/srv/code/project/wire",
+  "tools": ["read", "bash", "edit", "write"],
+  "timeoutMs": 55000
+}
+```
+
+Allowed tools are `read`, `bash`, `edit`, and `write`. Omission selects
+only `read`; an empty array disables tools. Duplicate names are deduplicated.
+Unknown names are rejected. Tools run with the parent process's OS permissions,
+without an approval extension. In particular, `bash` itself permits arbitrary
+commands and file changes. Neither `cwd` nor path instructions provide a sandbox.
+
+Model, thinking, working directory, and tools are saved in the child's
+`.jsonl.subagent.json` metadata. Resume with only `task`, `resume`, and
+optionally `label` and `timeoutMs`; configuration overrides are rejected.
+Older metadata without a tools field resumes with `["read"]`.
+
+Give each child a self-contained assignment and non-overlapping file ownership.
+Run independent children concurrently. A timeout is a supervision checkpoint:
+resume first for a concise progress report, then decide whether to continue.
+Review changes and run integration checks before accepting child output.
+
+Run `/reload` after updating the extension. Already-running children are unchanged.
+
+
 ## Require the piagent OS user
 
 `pi/.pi/agent/extensions/require-piagent.ts` exits with status 1 during

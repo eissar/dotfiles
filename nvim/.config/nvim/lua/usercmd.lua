@@ -124,25 +124,72 @@ end, {})
 
 vim.api.nvim_create_user_command('DiffSinceSaved', show_diff_since_last_saved, {})
 
-vim.api.nvim_create_user_command('ScreenshotMode', function()
-    if vim.opt.number:get() == true then
-        -- Hide numbers, whitespace, and signs (enter screenshot mode)
-        vim.opt.relativenumber = false
-        vim.opt.number = false
-        vim.opt.list = false
-        vim.opt.signcolumn = 'no'
-        vim.notify('Screenshot Mode: ON', vim.log.levels.INFO)
-        vim.opt.foldenable = false
-    else
-        vim.opt.relativenumber = true
-        vim.opt.number = true
-        vim.opt.list = true
-        vim.opt.signcolumn = 'yes'
-        vim.opt.foldenable = true
-        vim.notify('Screenshot Mode: OFF', vim.log.levels.INFO)
+local screenshot_windows = {}
+local screenshot_group
+-- Native winbar expressions refresh on redraw, including scrolling. No scroll
+-- callback, buffer edits, or persistent global Lua functions are needed.
+local screenshot_winbar = "%{expand('%:p')} start_line=%{line('w0')}"
+
+local function stop_screenshot_tracking()
+    if next(screenshot_windows) == nil and screenshot_group then
+        vim.api.nvim_del_augroup_by_id(screenshot_group)
+        screenshot_group = nil
     end
+end
+
+vim.api.nvim_create_user_command('ScreenshotMode', function()
+    local win = vim.api.nvim_get_current_win()
+    local saved = screenshot_windows[win]
+    if saved then
+        for option, value in pairs(saved) do
+            vim.wo[win][option] = value
+        end
+        screenshot_windows[win] = nil
+        stop_screenshot_tracking()
+        vim.notify('Screenshot Mode: OFF', vim.log.levels.INFO)
+        return
+    end
+
+    saved = {}
+    for _, option in ipairs({ 'number', 'relativenumber', 'list', 'signcolumn', 'foldenable', 'winbar', 'scrolloff' }) do
+        saved[option] = vim.wo[win][option]
+    end
+    screenshot_windows[win] = saved
+
+    if not screenshot_group then
+        screenshot_group = vim.api.nvim_create_augroup('screenshot-winbar', { clear = true })
+        -- Run after the existing cwd-header updater without modifying it.
+        vim.api.nvim_create_autocmd({ 'DirChanged', 'BufWinEnter', 'CmdlineLeave' }, {
+            group = screenshot_group,
+            callback = function()
+                for active_win in pairs(screenshot_windows) do
+                    if vim.api.nvim_win_is_valid(active_win) then
+                        if vim.wo[active_win].winbar ~= screenshot_winbar then
+                            vim.wo[active_win].winbar = screenshot_winbar
+                        end
+                    end
+                end
+            end,
+        })
+        vim.api.nvim_create_autocmd('WinClosed', {
+            group = screenshot_group,
+            callback = function(event)
+                screenshot_windows[tonumber(event.match)] = nil
+                stop_screenshot_tracking()
+            end,
+        })
+    end
+
+    vim.wo[win].number = false
+    vim.wo[win].relativenumber = false
+    vim.wo[win].list = false
+    vim.wo[win].signcolumn = 'no'
+    vim.wo[win].foldenable = false
+    vim.wo[win].scrolloff = 0
+    vim.wo[win].winbar = screenshot_winbar
+    vim.notify('Screenshot Mode: ON', vim.log.levels.INFO)
 end, {
-    desc = 'Toggle screenshot mode (no numbers, no whitespace, no signs)'
+    desc = 'Toggle screenshot mode with full path and viewport start line',
 })
 
 vim.api.nvim_create_user_command('Gbrowse', 'GBrowse', {})
