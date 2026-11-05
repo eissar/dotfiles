@@ -6,7 +6,6 @@
     "npm:@ifi/pi-plan@0.5.1",
     "npm:@eissar/pi-openrouter-session",
     "npm:pi-antigravity",
-    "npm:@eggmasonvalue/pi-subagent",
     "npm:@gotgenes/pi-anthropic-auth"
   ],
   "enabledModels": [
