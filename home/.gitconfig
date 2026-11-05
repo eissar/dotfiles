@@ -37,5 +37,9 @@
 # Applied via the dotfiles repo's .gitattributes. https://github.com/earendil-works/pi/issues/10187
 [filter "pi-settings"]
     clean = "jq 'del(.deviceId, .lastChangelogVersion)'"
+    # Identity smudge so checkout/stash/pull write the blob back instead of
+    # aborting. Without this, `required = true` makes any write of the file
+    # fatal and leaves it missing from the worktree.
+    smudge = cat
     # Fail instead of committing unfiltered content if jq is missing
     required = true
