@@ -9,6 +9,12 @@ focus_pane_down = ["prefix+j", "prefix+ctrl+j"]
 focus_pane_up = ["prefix+k", "prefix+ctrl+k"]
 focus_pane_right = ["prefix+l", "prefix+ctrl+l"]
 
+# Navigate mode (prefix): j/k move workspaces (overrides pane j/k); ctrl+j/k move panes.
+navigate_workspace_up = ["up", "k"]
+navigate_workspace_down = ["down", "j"]
+navigate_pane_up = "ctrl+k"
+navigate_pane_down = "ctrl+j"
+
 [theme]
 name = "terminal"
 
