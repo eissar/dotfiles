@@ -2,8 +2,8 @@
 name: deepwiki
 description: >
   Query any public GitHub repo's documentation via DeepWiki.
-  Use when needing to understand a library, framework, or dependency.
-  Triggers on "look up docs", "how does X work", "deepwiki", "deepwiki".
+  Use when needing to understand a library, framework, dependency, or how a GitHub repo works.
+  Triggers on "look up docs", "how does X work", "does github <owner/repo>...", "deepwiki".
 ---
 
 # deepwiki
