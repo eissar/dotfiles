@@ -1,7 +1,7 @@
 {
-  "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-4-8",
-  "defaultThinkingLevel": "off",
+  "defaultProvider": "antigravity",
+  "defaultModel": "gemini-4-hydrogen",
+  "defaultThinkingLevel": "medium",
   "packages": [
     "npm:@ifi/pi-plan@0.5.1",
     "npm:@eissar/pi-openrouter-session",
@@ -9,18 +9,22 @@
     "npm:@gotgenes/pi-anthropic-auth"
   ],
   "enabledModels": [
+    "antigravity/gemini-4-hydrogen",
+    "opencode-go/deepseek-v4.1-flash",
     "openai/gpt-6.1-sol",
     "antigravity/gemini-3.8-flash",
     "anthropic/claude-sonnet-5-5",
     "anthropic/claude-opus-5-5",
     "openrouter/deepseek/deepseek-v4.1-flash-1017",
-    "openai/gpt-6-luna"
+    "antigravity/gemini-4-argon",
+    "openai/gpt-6.1-terra",
+    "openrouter/hydrogen-flex"
   ],
   "enableInstallTelemetry": false,
   "quietStartup": true,
   "showHardwareCursor": true,
   "theme": "nightfox",
-  "hideThinkingBlock": false,
+  "hideThinkingBlock": true,
   "warnings": {
     "anthropicExtraUsage": false
   },

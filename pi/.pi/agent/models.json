@@ -103,6 +103,102 @@
           ],
           "contextWindow": 1000000,
           "maxTokens": 943700
+        },
+        {
+          "id": "tencent/hy4-flash",
+          "name": "Tencent: Hy4 flash",
+          "api": "openai-completions",
+          "baseUrl": "https://openrouter.ai/api/v1",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": "low",
+            "medium": null,
+            "high": "high",
+            "xhigh": null,
+            "max": null
+          },
+          "input": [
+            "text",
+            "image"
+          ],
+          "cost": {
+            "input": 0.04375,
+            "output": 0.175625,
+            "cacheRead": 0.001875,
+            "cacheWrite": 0
+          },
+          "contextWindow": 1048576,
+          "maxTokens": 65536,
+          "compat": {
+            "supportsDeveloperRole": false,
+            "thinkingFormat": "openrouter",
+            "supportsStrictMode": true
+          }
+        },
+        {
+          "id": "hydrogen-flex",
+          "name": "Gemini 4 Hydrogen Flex (OpenRouter)",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 65536,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": null
+          },
+          "cost": {
+            "input": 0.75,
+            "output": 3.75,
+            "cacheRead": 0.0375,
+            "cacheWrite": 0.0375
+          },
+          "compat": {
+            "supportsDeveloperRole": false,
+            "thinkingFormat": "openrouter",
+            "supportsStrictMode": true
+          }
+        }
+      ]
+    },
+    "antigravity": {
+      "models": [
+        {
+          "id": "gemini-4-hydrogen-high",
+          "name": "Gemini 4 Hydrogen (Antigravity)",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": null
+          },
+          "input": [
+            "text",
+            "image"
+          ],
+          "cost": {
+            "input": 0.1,
+            "output": 0.4,
+            "cacheRead": 0.025,
+            "cacheWrite": 0.1
+          },
+          "contextWindow": 1048576,
+          "maxTokens": 65536,
+          "api": "antigravity-api",
+          "baseUrl": "https://daily-cloudcode-pa.googleapis.com"
         }
       ]
     }
