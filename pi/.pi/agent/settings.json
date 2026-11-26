@@ -32,5 +32,6 @@
   "defaultTools": [
     "-generate_image",
     "+codemode"
-  ]
+  ],
+  "httpIdleTimeoutMs": 900000
 }
